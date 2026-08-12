@@ -1,0 +1,55 @@
+{
+  "generatedAt": "2026-08-12T20:00:46.326Z",
+  "garmentFileId": "B00hyz9mHxN15x1apXDFzbRPCAQvkYYJllwkJ282QkULbKfeLEmuXUa9yH4wuc2K",
+  "totalWallClockMs": 28055,
+  "perPerson": [
+    {
+      "id": "panel-fitzpatrick-I",
+      "status": "success",
+      "wallClockMs": 16579,
+      "localPath": "panel/vto-results/panel-fitzpatrick-I.jpg"
+    },
+    {
+      "id": "panel-fitzpatrick-II",
+      "status": "success",
+      "wallClockMs": 16688,
+      "localPath": "panel/vto-results/panel-fitzpatrick-II.jpg"
+    },
+    {
+      "id": "panel-fitzpatrick-III",
+      "status": "success",
+      "wallClockMs": 18311,
+      "localPath": "panel/vto-results/panel-fitzpatrick-III.jpg"
+    },
+    {
+      "id": "panel-fitzpatrick-III-b",
+      "status": "success",
+      "wallClockMs": 18039,
+      "localPath": "panel/vto-results/panel-fitzpatrick-III-b.jpg"
+    },
+    {
+      "id": "panel-fitzpatrick-IV",
+      "status": "success",
+      "wallClockMs": 18261,
+      "localPath": "panel/vto-results/panel-fitzpatrick-IV.jpg"
+    },
+    {
+      "id": "panel-fitzpatrick-V",
+      "status": "success",
+      "wallClockMs": 16601,
+      "localPath": "panel/vto-results/panel-fitzpatrick-V.jpg"
+    },
+    {
+      "id": "panel-fitzpatrick-V-b",
+      "status": "success",
+      "wallClockMs": 28042,
+      "localPath": "panel/vto-results/panel-fitzpatrick-V-b.jpg"
+    },
+    {
+      "id": "panel-fitzpatrick-VI",
+      "status": "success",
+      "wallClockMs": 16533,
+      "localPath": "panel/vto-results/panel-fitzpatrick-VI.jpg"
+    }
+  ]
+}
