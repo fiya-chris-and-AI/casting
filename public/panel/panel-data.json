@@ -1,0 +1,177 @@
+{
+  "generatedAt": "2026-08-12T18:27:31.741Z",
+  "panel": [
+    {
+      "id": "panel-fitzpatrick-I",
+      "intendedBand": "I",
+      "ageRange": "20s",
+      "gender": "woman",
+      "imageProvenance": "AI-generated (Gemini 3.1 Flash Image), fictional person, no real individual depicted",
+      "measuredAt": "2026-08-12T18:25:06.367Z",
+      "fitzpatrickScale": "I",
+      "skinColorHex": "#bfa28c",
+      "eyeColorHex": "#463b32",
+      "lipColorHex": "#cd9594",
+      "hairColorHex": "#B56637",
+      "faceQuality": {
+        "has_face": true,
+        "area": "good",
+        "frontal": "good",
+        "lighting": "good",
+        "faceangle": "good"
+      },
+      "skinTypeScore": {}
+    },
+    {
+      "id": "panel-fitzpatrick-II",
+      "intendedBand": "II",
+      "ageRange": "40s",
+      "gender": "man",
+      "imageProvenance": "AI-generated (Gemini 3.1 Flash Image), fictional person, no real individual depicted",
+      "measuredAt": "2026-08-12T18:51:54.723Z",
+      "fitzpatrickScale": "III",
+      "skinColorHex": "#b18b70",
+      "eyeColorHex": "#76604a",
+      "lipColorHex": "#cc8f8a",
+      "hairColorHex": "#B56637",
+      "faceQuality": {
+        "has_face": true,
+        "area": "good",
+        "frontal": "good",
+        "lighting": "good",
+        "faceangle": "good"
+      },
+      "skinTypeScore": {},
+      "measuredViaAccount": "backup"
+    },
+    {
+      "id": "panel-fitzpatrick-III",
+      "intendedBand": "III",
+      "ageRange": "30s",
+      "gender": "man",
+      "imageProvenance": "AI-generated (Gemini 3.1 Flash Image), fictional person, no real individual depicted",
+      "measuredAt": "2026-08-12T18:25:54.336Z",
+      "fitzpatrickScale": "III",
+      "skinColorHex": "#b58e73",
+      "eyeColorHex": "#5d3a23",
+      "lipColorHex": "#bd807b",
+      "hairColorHex": "#B56637",
+      "faceQuality": {
+        "has_face": true,
+        "area": "good",
+        "frontal": "good",
+        "lighting": "good",
+        "faceangle": "good"
+      },
+      "skinTypeScore": {}
+    },
+    {
+      "id": "panel-fitzpatrick-III-b",
+      "intendedBand": "III",
+      "ageRange": "50s",
+      "gender": "woman",
+      "imageProvenance": "AI-generated (Gemini 3.1 Flash Image), fictional person, no real individual depicted",
+      "measuredAt": "2026-08-12T18:26:17.955Z",
+      "fitzpatrickScale": "III",
+      "skinColorHex": "#aa856a",
+      "eyeColorHex": "#342019",
+      "lipColorHex": "#c0837b",
+      "hairColorHex": null,
+      "faceQuality": {
+        "has_face": true,
+        "area": "good",
+        "frontal": "good",
+        "lighting": "good",
+        "faceangle": "good"
+      },
+      "skinTypeScore": {}
+    },
+    {
+      "id": "panel-fitzpatrick-IV",
+      "intendedBand": "IV",
+      "ageRange": "20s",
+      "gender": "woman",
+      "imageProvenance": "AI-generated (Gemini 3.1 Flash Image), fictional person, no real individual depicted",
+      "measuredAt": "2026-08-12T18:52:19.409Z",
+      "fitzpatrickScale": "IV",
+      "skinColorHex": "#9d7559",
+      "eyeColorHex": "#191111",
+      "lipColorHex": "#cf8b81",
+      "hairColorHex": "#B56637",
+      "faceQuality": {
+        "has_face": true,
+        "area": "good",
+        "frontal": "good",
+        "lighting": "good",
+        "faceangle": "good"
+      },
+      "skinTypeScore": {},
+      "measuredViaAccount": "backup"
+    },
+    {
+      "id": "panel-fitzpatrick-V",
+      "intendedBand": "V",
+      "ageRange": "40s",
+      "gender": "man",
+      "imageProvenance": "AI-generated (Gemini 3.1 Flash Image), fictional person, no real individual depicted",
+      "measuredAt": "2026-08-12T18:26:54.461Z",
+      "fitzpatrickScale": "VI",
+      "skinColorHex": "#6c4e3a",
+      "eyeColorHex": "#221716",
+      "lipColorHex": "#8f6663",
+      "hairColorHex": "#B56637",
+      "faceQuality": {
+        "has_face": true,
+        "area": "good",
+        "frontal": "good",
+        "lighting": "good",
+        "faceangle": "good"
+      },
+      "skinTypeScore": {}
+    },
+    {
+      "id": "panel-fitzpatrick-V-b",
+      "intendedBand": "V",
+      "ageRange": "30s",
+      "gender": "woman",
+      "imageProvenance": "AI-generated (Gemini 3.1 Flash Image), fictional person, no real individual depicted",
+      "measuredAt": "2026-08-12T18:27:11.984Z",
+      "fitzpatrickScale": "VI",
+      "skinColorHex": "#704f39",
+      "eyeColorHex": "#181110",
+      "lipColorHex": "#73504f",
+      "hairColorHex": "#B56637",
+      "faceQuality": {
+        "has_face": true,
+        "area": "good",
+        "frontal": "good",
+        "lighting": "good",
+        "faceangle": "good"
+      },
+      "skinTypeScore": {}
+    },
+    {
+      "id": "panel-fitzpatrick-VI",
+      "intendedBand": "VI",
+      "ageRange": "50s",
+      "gender": "man",
+      "imageProvenance": "AI-generated (Gemini 3.1 Flash Image), fictional person, no real individual depicted",
+      "measuredAt": "2026-08-12T18:49:46.928Z",
+      "fitzpatrickScale": "VI",
+      "skinColorHex": "#664c3b",
+      "eyeColorHex": "#161510",
+      "lipColorHex": "#7d6765",
+      "hairColorHex": "#FAF0BE",
+      "faceQuality": {
+        "has_face": true,
+        "area": "good",
+        "frontal": "good",
+        "lighting": "good",
+        "faceangle": "good"
+      },
+      "skinTypeScore": {},
+      "measuredViaAccount": "backup"
+    }
+  ],
+  "coverageNote": "Measured Fitzpatrick bands across the 8-person panel: I, III (x3), IV, VI (x3). Bands II and V were targeted during image generation but the AI Skin Analysis measurement placed those generated faces in III and VI instead \u2014 visual intent and measured classification diverged, which is itself the honest point of measuring rather than assuming. Not re-chased further to conserve the limited YouCam API unit budget (see .env.example unit caps). This gap is disclosed in the Methods Panel (How we measure), not hidden."
+}
