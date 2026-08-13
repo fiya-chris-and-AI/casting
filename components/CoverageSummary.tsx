@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { CoverageReport } from "@/lib/coverage";
 
 export function CoverageSummary({ report }: { report: CoverageReport }) {
@@ -8,11 +9,14 @@ export function CoverageSummary({ report }: { report: CoverageReport }) {
         {report.measurableBands.length > 0 && ` (${report.measurableBands.join(", ")})`}
         {report.unmeasurableBands.length > 0 && ` — not measurable: ${report.unmeasurableBands.join(", ")}`}
       </span>
-      {report.lowContrastBands.length > 0 && (
-        <span className="text-[color:var(--gap-accent)]">
-          ● low contrast at {report.lowContrastBands.join(", ")}
-        </span>
-      )}
+      <span className="flex items-center gap-3">
+        {report.lowContrastBands.length > 0 && (
+          <span className="text-[color:var(--gap-accent)]">● low contrast at {report.lowContrastBands.join(", ")}</span>
+        )}
+        <Link href="/methods" className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)]">
+          How we measure
+        </Link>
+      </span>
     </div>
   );
 }
