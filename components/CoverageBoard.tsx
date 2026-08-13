@@ -2,17 +2,15 @@
 
 import { useState } from "react";
 import type { PanelMember } from "@/lib/panel";
-import { vtoResultPath } from "@/lib/panel";
+import { getSeedRevealDelayMs, vtoResultPath } from "@/lib/panel";
 import type { MemberDiagnosis } from "@/lib/coverage";
 
 interface CoverageBoardProps {
   panel: PanelMember[];
   diagnosisByPanelId: Record<string, MemberDiagnosis>;
-  /** ms between each tile's fill-in — the staggered reveal is the demo's core beat */
-  staggerMs?: number;
 }
 
-export function CoverageBoard({ panel, diagnosisByPanelId, staggerMs = 950 }: CoverageBoardProps) {
+export function CoverageBoard({ panel, diagnosisByPanelId }: CoverageBoardProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = selectedId ? diagnosisByPanelId[selectedId] : null;
 
@@ -26,7 +24,7 @@ export function CoverageBoard({ panel, diagnosisByPanelId, staggerMs = 950 }: Co
           backgroundColor: "var(--background)",
         }}
       >
-        {panel.map((member, index) => {
+        {panel.map((member) => {
           const diagnosis = diagnosisByPanelId[member.id];
           const isGap = diagnosis?.lowContrast ?? false;
           return (
@@ -36,7 +34,7 @@ export function CoverageBoard({ panel, diagnosisByPanelId, staggerMs = 950 }: Co
               style={{
                 opacity: 0,
                 animation: `tile-fill-in 0.6s ease-out forwards`,
-                animationDelay: `${index * staggerMs}ms`,
+                animationDelay: `${getSeedRevealDelayMs(member.id)}ms`,
                 boxShadow: isGap ? "inset 0 -4px 0 0 var(--gap-accent)" : undefined,
               }}
               onClick={() => setSelectedId(member.id)}
