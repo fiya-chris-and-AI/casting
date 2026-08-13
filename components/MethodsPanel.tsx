@@ -29,10 +29,15 @@ export function MethodsPanel() {
       </ul>
 
       <h2 className="mb-2 font-medium">Sample</h2>
+      <p className="mb-2">
+        Eight people, measured — <strong>Fitzpatrick I, III, IV and VI</strong>.{" "}
+        <strong className="text-[color:var(--gap-accent)]">Fitzpatrick II and V are not measurable with this panel</strong> —
+        not covered, not claimed as covered, just not in this eight. We prompted for all six bands when generating
+        the panel; the real measurement landed on four. That gap is disclosed here, not smoothed over.
+      </p>
       <p className="mb-6">
-        Eight reference people, one per tile. <strong>Eight people are a sample, not a population</strong> — this
-        product measures whether a colorway separates from these eight measured skin tones, not what any population
-        of customers looks like. We say this here so nobody has to ask.
+        <strong>Eight people are a sample, not a population.</strong> This product measures whether a colorway
+        separates from these eight measured skin tones, not what any population of customers looks like.
       </p>
 
       <h2 className="mb-2 font-medium">Panel image provenance</h2>
