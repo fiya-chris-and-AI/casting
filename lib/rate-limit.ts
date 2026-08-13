@@ -54,14 +54,35 @@ function currentTranche(now: Date): Tranche {
   return "past-judging";
 }
 
-/** Units that must stay untouched for tranches AFTER the current one. */
-function reserveForLaterTranches(tranche: Tranche): number {
+const DAY_MS = 24 * 60 * 60 * 1000;
+const TRANCHE_3_DAILY_UNITS = TRANCHE_3_JUDGING_RUNS_PER_DAY * MEASURED_UNITS_PER_RUN; // 32
+
+/**
+ * Units that must stay untouched for everything AFTER right now — including
+ * the REST of the judging tranche, not just the tranches after it.
+ *
+ * This is what actually makes the judging-window cap durable across
+ * serverless cold starts (Round 2 adversarial finding): rather than relying
+ * on a per-instance counter that resets whenever Vercel spins up a fresh
+ * instance, every check re-derives "how many judging days are left as of
+ * THIS real balance read" and reserves for all of them except today. A
+ * concurrent request racing this one can, at worst, spend one extra day's
+ * allowance before the next request sees the now-lower real balance and
+ * tightens accordingly — the error is bounded to ~1 day's budget and
+ * self-corrects on the very next check, rather than being able to drain the
+ * whole 448-unit tranche unnoticed.
+ */
+function reserveForLaterTranches(tranche: Tranche, now: Date): number {
   switch (tranche) {
     case "pre-freeze":
       return TRANCHE_2_RESERVE_UNITS + TRANCHE_3_RESERVE_UNITS;
     case "video-day":
       return TRANCHE_3_RESERVE_UNITS;
-    case "judging":
+    case "judging": {
+      const daysRemainingInclusiveOfToday = Math.max(1, Math.ceil((JUDGING_END.getTime() - now.getTime()) / DAY_MS));
+      const futureDays = daysRemainingInclusiveOfToday - 1;
+      return futureDays * TRANCHE_3_DAILY_UNITS;
+    }
     case "past-judging":
       return 0;
   }
@@ -113,7 +134,7 @@ export async function checkLiveRunBudget(): Promise<BudgetCheckResult> {
     return { allowed: false, reason: "Could not verify live API budget." };
   }
 
-  const reserve = reserveForLaterTranches(tranche);
+  const reserve = reserveForLaterTranches(tranche, now);
   const spendable = remainingUnits - reserve;
 
   if (spendable < MEASURED_UNITS_PER_RUN) {
