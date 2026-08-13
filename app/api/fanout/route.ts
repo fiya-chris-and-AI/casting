@@ -1,20 +1,11 @@
 import { runPanelFanout, type PanelFanoutResult } from "@/lib/youcam/fanout";
+import { getPanel } from "@/lib/panel";
+import { dailyCap, isOverDailyCap, liveRunsRemaining, recordLiveRun } from "@/lib/rate-limit";
 
 // The real fan-out call: ~28s measured wall-clock across 8 parallel Apparel
 // VTO calls (see panel/vto-latency-report.json). Must outlive Vercel's
 // default function timeout, hence the explicit maxDuration below.
 export const maxDuration = 60;
-
-const PANEL_IDS = [
-  "panel-fitzpatrick-I",
-  "panel-fitzpatrick-II",
-  "panel-fitzpatrick-III",
-  "panel-fitzpatrick-III-b",
-  "panel-fitzpatrick-IV",
-  "panel-fitzpatrick-V",
-  "panel-fitzpatrick-V-b",
-  "panel-fitzpatrick-VI",
-];
 
 // A single-pixel PNG — deliberately too small for the API to detect a face.
 // Used only when testFailurePanelId is set, to exercise the real error path
@@ -31,6 +22,7 @@ async function fetchAsBuffer(url: URL): Promise<Buffer> {
 type StreamMessage =
   | { type: "progress"; result: PanelFanoutResult }
   | { type: "done"; wallClockMs: number; results: PanelFanoutResult[] }
+  | { type: "capped"; message: string }
   | { type: "fatal"; error: string };
 
 export async function POST(request: Request) {
@@ -46,7 +38,22 @@ export async function POST(request: Request) {
     async start(controller) {
       const send = (message: StreamMessage) => controller.enqueue(encoder.encode(`${JSON.stringify(message)}\n`));
 
+      // Soft daily budget guard — see lib/rate-limit.ts for the honest
+      // limitations of this counter. When it trips, no YouCam call is made
+      // at all: the client falls back to the precomputed seed run instead
+      // of ever showing a broken or empty page.
+      if (isOverDailyCap()) {
+        send({
+          type: "capped",
+          message: `Live API budget for today is exhausted (cap: ${dailyCap()} runs/day). Showing a precomputed run instead.`,
+        });
+        controller.close();
+        return;
+      }
+
       try {
+        const panelIds = getPanel().map((m) => m.id);
+
         let productBytes: Buffer;
         let productContentType = "image/png";
         if (body?.productImageBase64) {
@@ -57,7 +64,7 @@ export async function POST(request: Request) {
         }
 
         const panelMembers = await Promise.all(
-          PANEL_IDS.map(async (id) => ({
+          panelIds.map(async (id) => ({
             panelId: id,
             bodyImageBytes:
               id === body?.testFailurePanelId
@@ -66,12 +73,17 @@ export async function POST(request: Request) {
           })),
         );
 
+        recordLiveRun();
         const results = await runPanelFanout(productBytes, productContentType, panelMembers, "upper_body", (result) =>
           send({ type: "progress", result }),
         );
 
         send({ type: "done", wallClockMs: Date.now() - startedAt, results });
       } catch (err) {
+        // Any real failure (including credit exhaustion the soft counter
+        // didn't catch in time) is reported as a typed fatal message, never
+        // a raw 500 — the client is responsible for falling back to the
+        // seed run on receiving this, per the "never a broken page" rule.
         send({ type: "fatal", error: err instanceof Error ? err.message : String(err) });
       } finally {
         controller.close();
@@ -82,4 +94,8 @@ export async function POST(request: Request) {
   return new Response(stream, {
     headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store" },
   });
+}
+
+export async function GET() {
+  return Response.json({ liveRunsRemainingToday: liveRunsRemaining(), dailyCap: dailyCap() });
 }
