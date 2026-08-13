@@ -13,6 +13,12 @@ export function CoverageSummary({ report }: { report: CoverageReport }) {
         {report.lowContrastBands.length > 0 && (
           <span className="text-[color:var(--gap-accent)]">● low contrast at {report.lowContrastBands.join(", ")}</span>
         )}
+        <a href="/api/export/zip" className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)]">
+          Export image set (ZIP)
+        </a>
+        <Link href="/report" className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)]">
+          Coverage report
+        </Link>
         <Link href="/methods" className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)]">
           How we measure
         </Link>

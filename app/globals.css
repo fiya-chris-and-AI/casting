@@ -36,3 +36,20 @@ body {
     transform: scale(1);
   }
 }
+
+/* /report is a one-page printable coverage report — force a single page,
+   no browser header/footer clutter, exact colors so the skin-tone swatches
+   print faithfully. */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0.5in;
+  }
+  body {
+    background: white;
+  }
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
