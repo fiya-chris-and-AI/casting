@@ -170,3 +170,13 @@ export async function runTask(
   const taskId = await startTask(taskPath, payload);
   return pollTask(taskPath, taskId, pollOpts);
 }
+
+interface CreditToken {
+  amount: number;
+}
+
+/** Real, live account balance — GET /s2s/v1.0/client/credit, read-only, does not itself spend units. */
+export async function getYoucamCreditBalance(): Promise<number> {
+  const res = (await youcamFetch("/s2s/v1.0/client/credit", { method: "GET" })) as { results?: CreditToken[] };
+  return (res.results ?? []).reduce((sum, token) => sum + (token.amount ?? 0), 0);
+}

@@ -1,10 +1,10 @@
 import { runPanelFanout, type PanelFanoutResult } from "@/lib/youcam/fanout";
 import { getPanel } from "@/lib/panel";
-import { dailyCap, isOverDailyCap, liveRunsRemaining, recordLiveRun } from "@/lib/rate-limit";
+import { checkLiveRunBudget, recordLiveRun } from "@/lib/rate-limit";
 
-// The real fan-out call: ~28s measured wall-clock across 8 parallel Apparel
-// VTO calls (see panel/vto-latency-report.json). Must outlive Vercel's
-// default function timeout, hence the explicit maxDuration below.
+// The real fan-out call: ~28-34s measured wall-clock across 8 parallel
+// Apparel VTO calls (see panel/vto-latency-report.json). Must outlive
+// Vercel's default function timeout, hence the explicit maxDuration below.
 export const maxDuration = 60;
 
 // A single-pixel PNG — deliberately too small for the API to detect a face.
@@ -38,15 +38,13 @@ export async function POST(request: Request) {
     async start(controller) {
       const send = (message: StreamMessage) => controller.enqueue(encoder.encode(`${JSON.stringify(message)}\n`));
 
-      // Soft daily budget guard — see lib/rate-limit.ts for the honest
-      // limitations of this counter. When it trips, no YouCam call is made
-      // at all: the client falls back to the precomputed seed run instead
-      // of ever showing a broken or empty page.
-      if (isOverDailyCap()) {
-        send({
-          type: "capped",
-          message: `Live API budget for today is exhausted (cap: ${dailyCap()} runs/day). Showing a precomputed run instead.`,
-        });
+      // Budget guard checked against the REAL YouCam account balance (see
+      // lib/rate-limit.ts) before a single unit is spent. When it trips, no
+      // YouCam call is made at all — the client falls back to the
+      // precomputed seed run instead of ever showing a broken or empty page.
+      const budget = await checkLiveRunBudget();
+      if (!budget.allowed) {
+        send({ type: "capped", message: budget.reason ?? "Live API budget unavailable. Showing a precomputed run instead." });
         controller.close();
         return;
       }
@@ -80,10 +78,11 @@ export async function POST(request: Request) {
 
         send({ type: "done", wallClockMs: Date.now() - startedAt, results });
       } catch (err) {
-        // Any real failure (including credit exhaustion the soft counter
-        // didn't catch in time) is reported as a typed fatal message, never
-        // a raw 500 — the client is responsible for falling back to the
-        // seed run on receiving this, per the "never a broken page" rule.
+        // Any real failure (including credit exhaustion the budget check
+        // didn't catch — e.g. a concurrent request draining the balance
+        // between the check and the call) is reported as a typed fatal
+        // message, never a raw 500 — the client always falls back to the
+        // seed run on receiving this.
         send({ type: "fatal", error: err instanceof Error ? err.message : String(err) });
       } finally {
         controller.close();
@@ -94,8 +93,4 @@ export async function POST(request: Request) {
   return new Response(stream, {
     headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store" },
   });
-}
-
-export async function GET() {
-  return Response.json({ liveRunsRemainingToday: liveRunsRemaining(), dailyCap: dailyCap() });
 }

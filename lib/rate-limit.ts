@@ -1,50 +1,133 @@
 /**
- * Best-effort call-budget guard for live visitor-triggered fan-outs.
+ * Live-run budget guard, backed by YouCam's own real account balance
+ * (GET /s2s/v1.0/client/credit) rather than a counter we'd have to trust —
+ * the account balance is genuinely shared, server-side truth, which is a
+ * stronger guarantee than any in-memory or per-instance counter could be.
  *
- * HONEST LIMITATION: this is an in-memory, per-serverless-instance counter.
- * It is NOT a distributed hard cap — Vercel may run multiple instances
- * concurrently, and every cold start resets it to zero. A true hard global
- * cap needs shared state (Vercel KV/Upstash), which was not provisioned
- * here (that's new billed infrastructure, a bigger decision than this fix
- * warrants on its own). What this DOES guarantee, together with the
- * reactive fallback in the fan-out route: a visitor is never shown a
- * broken or empty page, because any real API failure (including real
- * credit exhaustion) is caught and converted into the seed-run fallback —
- * this soft counter just reduces how often that fallback has to trigger.
+ * MEASURED COST: on 2026-08-13, a full 8-person fan-out was measured at
+ * 670 -> 654 units on Account B (the only funded account — Account A sits
+ * at 0 and is not used in production). That is 16 units for 8 calls = 2
+ * units per Apparel VTO call, not the naively assumed 1:1. All budget math
+ * below is derived from this measured number, not an assumption.
  */
 
-let liveRunsToday = 0;
-let dayStamp = "";
+import { getYoucamCreditBalance } from "./youcam/client";
 
-function todayStamp(): string {
-  return new Date().toISOString().slice(0, 10);
+export const MEASURED_UNITS_PER_RUN = 16;
+
+/**
+ * Three fixed tranches, carved out of the ~654-unit balance measured
+ * 2026-08-13. Each tranche is a RESERVE for everything after it — a run is
+ * only allowed if the balance minus the reserve for later tranches still
+ * covers one run.
+ *
+ *   Tranche 1 — now through Feature-Freeze (Sun 2026-08-16 12:00 CEST):
+ *     rest-of-build testing, Examiner Round 2, demo rehearsals.
+ *   Tranche 2 — the video recording morning (Mon 2026-08-17, until the
+ *     12:00 submission deadline): untouchable reserve for retakes.
+ *   Tranche 3 — the 14-day judging window (2026-08-18 through 2026-08-31):
+ *     unattended, must not run dry, gets the largest reserve.
+ *
+ * Allocation (documented, not just asserted):
+ *   Tranche 3: 14 days x 2 runs/day  = 28 runs = 448 units (the floor that
+ *     must survive the entire judging window without any intervention).
+ *   Tranche 2: 6 runs = 96 units (generous retake margin for one morning).
+ *   Tranche 1: remainder (~654 - 448 - 96 = 110 units, ~6 runs) for
+ *     everything between now and Feature-Freeze.
+ */
+export const TRANCHE_3_JUDGING_RUNS_PER_DAY = 2;
+export const TRANCHE_3_JUDGING_DAYS = 14;
+export const TRANCHE_3_RESERVE_UNITS = TRANCHE_3_JUDGING_RUNS_PER_DAY * TRANCHE_3_JUDGING_DAYS * MEASURED_UNITS_PER_RUN; // 448
+export const TRANCHE_2_VIDEO_DAY_RUNS = 6;
+export const TRANCHE_2_RESERVE_UNITS = TRANCHE_2_VIDEO_DAY_RUNS * MEASURED_UNITS_PER_RUN; // 96
+
+const FEATURE_FREEZE = new Date("2026-08-16T12:00:00+02:00");
+const SUBMISSION_DEADLINE = new Date("2026-08-17T12:00:00+02:00");
+const JUDGING_END = new Date("2026-08-31T23:59:59+02:00");
+
+type Tranche = "pre-freeze" | "video-day" | "judging" | "past-judging";
+
+function currentTranche(now: Date): Tranche {
+  if (now < FEATURE_FREEZE) return "pre-freeze";
+  if (now < SUBMISSION_DEADLINE) return "video-day";
+  if (now <= JUDGING_END) return "judging";
+  return "past-judging";
 }
 
-function resetIfNewDay() {
-  const stamp = todayStamp();
-  if (stamp !== dayStamp) {
-    dayStamp = stamp;
-    liveRunsToday = 0;
+/** Units that must stay untouched for tranches AFTER the current one. */
+function reserveForLaterTranches(tranche: Tranche): number {
+  switch (tranche) {
+    case "pre-freeze":
+      return TRANCHE_2_RESERVE_UNITS + TRANCHE_3_RESERVE_UNITS;
+    case "video-day":
+      return TRANCHE_3_RESERVE_UNITS;
+    case "judging":
+    case "past-judging":
+      return 0;
   }
 }
 
-export function dailyCap(): number {
-  const perRun = Number(process.env.YOUCAM_MAX_CALLS_PER_RUN ?? 8);
-  const perDay = Number(process.env.YOUCAM_MAX_CALLS_PER_DAY ?? 120);
-  return Math.floor(perDay / perRun);
+// Fast, cheap first-line check (module-scope, per-instance, resets daily) —
+// avoids hitting the real balance endpoint on every single request. The
+// authoritative check is still the real balance below; this only bounds
+// request volume, per-instance, as the "fraction" safety margin requested.
+let instanceRunsToday = 0;
+let instanceDayStamp = "";
+function instanceCapForTranche(tranche: Tranche): number {
+  // A fraction of the daily judging allowance, so that even if Vercel runs
+  // several concurrent instances, no single one can burn through more than
+  // a fraction of a day's budget on its own before the real balance check
+  // (below) catches the rest.
+  if (tranche === "judging") return 1;
+  return 3;
+}
+function resetInstanceCounterIfNewDay() {
+  const stamp = new Date().toISOString().slice(0, 10);
+  if (stamp !== instanceDayStamp) {
+    instanceDayStamp = stamp;
+    instanceRunsToday = 0;
+  }
 }
 
-export function isOverDailyCap(): boolean {
-  resetIfNewDay();
-  return liveRunsToday >= dailyCap();
+export interface BudgetCheckResult {
+  allowed: boolean;
+  reason?: string;
+  remainingUnits?: number;
+}
+
+export async function checkLiveRunBudget(): Promise<BudgetCheckResult> {
+  const now = new Date();
+  const tranche = currentTranche(now);
+
+  resetInstanceCounterIfNewDay();
+  if (instanceRunsToday >= instanceCapForTranche(tranche)) {
+    return { allowed: false, reason: "This instance has reached its per-day run cap." };
+  }
+
+  let remainingUnits: number;
+  try {
+    remainingUnits = await getYoucamCreditBalance();
+  } catch {
+    // If we can't even check the balance, don't risk a live call — fall
+    // back to the seed run rather than find out the hard way.
+    return { allowed: false, reason: "Could not verify live API budget." };
+  }
+
+  const reserve = reserveForLaterTranches(tranche);
+  const spendable = remainingUnits - reserve;
+
+  if (spendable < MEASURED_UNITS_PER_RUN) {
+    return {
+      allowed: false,
+      reason: `Live API budget for today is exhausted (${remainingUnits} units left, ${reserve} reserved for later). Showing a precomputed run instead.`,
+      remainingUnits,
+    };
+  }
+
+  return { allowed: true, remainingUnits };
 }
 
 export function recordLiveRun(): void {
-  resetIfNewDay();
-  liveRunsToday += 1;
-}
-
-export function liveRunsRemaining(): number {
-  resetIfNewDay();
-  return Math.max(0, dailyCap() - liveRunsToday);
+  resetInstanceCounterIfNewDay();
+  instanceRunsToday += 1;
 }

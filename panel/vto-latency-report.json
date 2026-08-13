@@ -1,54 +1,54 @@
 {
-  "generatedAt": "2026-08-12T20:00:46.326Z",
-  "garmentFileId": "B00hyz9mHxN15x1apXDFzbRPCAQvkYYJllwkJ282QkULbKfeLEmuXUa9yH4wuc2K",
-  "totalWallClockMs": 28055,
+  "generatedAt": "2026-08-13T19:32:48.632Z",
+  "garmentFileId": "mkz8JKu4yjaeLmbor8hc4cfNFjZurugMd0yz0rckJcALbKfeLEmuXUa9yH4wuc2K",
+  "totalWallClockMs": 34440,
   "perPerson": [
     {
       "id": "person-01",
       "status": "success",
-      "wallClockMs": 16579,
+      "wallClockMs": 17645,
       "localPath": "panel/vto-results/person-01.jpg"
     },
     {
       "id": "person-02",
       "status": "success",
-      "wallClockMs": 16688,
+      "wallClockMs": 22633,
       "localPath": "panel/vto-results/person-02.jpg"
     },
     {
       "id": "person-03",
       "status": "success",
-      "wallClockMs": 18311,
+      "wallClockMs": 22781,
       "localPath": "panel/vto-results/person-03.jpg"
     },
     {
       "id": "person-04",
       "status": "success",
-      "wallClockMs": 18039,
+      "wallClockMs": 33216,
       "localPath": "panel/vto-results/person-04.jpg"
     },
     {
       "id": "person-05",
       "status": "success",
-      "wallClockMs": 18261,
+      "wallClockMs": 34428,
       "localPath": "panel/vto-results/person-05.jpg"
     },
     {
       "id": "person-06",
       "status": "success",
-      "wallClockMs": 16601,
+      "wallClockMs": 22345,
       "localPath": "panel/vto-results/person-06.jpg"
     },
     {
       "id": "person-07",
       "status": "success",
-      "wallClockMs": 28042,
+      "wallClockMs": 32061,
       "localPath": "panel/vto-results/person-07.jpg"
     },
     {
       "id": "person-08",
       "status": "success",
-      "wallClockMs": 16533,
+      "wallClockMs": 22074,
       "localPath": "panel/vto-results/person-08.jpg"
     }
   ]

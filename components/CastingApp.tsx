@@ -119,12 +119,22 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
     <div className="relative flex h-full w-full flex-col">
       <div className="flex items-center justify-between gap-4 px-4 py-2 text-xs">
         <div className="flex items-center gap-3">
+          <span
+            className="rounded px-2 py-0.5 font-medium"
+            style={
+              isLive
+                ? { backgroundColor: "var(--gap-accent)", color: "white" }
+                : { border: "1px solid var(--muted)", color: "var(--muted)" }
+            }
+          >
+            {isLive ? "● live run — real API calls" : "precomputed demo run"}
+          </span>
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={mode === "running"}
             className="rounded border border-[var(--muted)] px-2 py-1 text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-50"
           >
-            Upload a product photo
+            Upload your own product — runs live
           </button>
           <input
             ref={fileInputRef}
@@ -141,7 +151,7 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
             disabled={mode === "running"}
             className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)] disabled:opacity-50"
           >
-            {mode === "running" ? "Running…" : "Run live with the demo product"}
+            {mode === "running" ? "Running…" : "Run it live with the demo product"}
           </button>
         </div>
         {fallbackNotice && <span className="text-[color:var(--gap-accent)]">{fallbackNotice}</span>}
