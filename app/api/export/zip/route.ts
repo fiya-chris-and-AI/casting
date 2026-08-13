@@ -1,23 +1,24 @@
+import fs from "fs";
+import path from "path";
 import JSZip from "jszip";
 import { getPanel } from "@/lib/panel";
 
-async function fetchAsBuffer(url: URL): Promise<Buffer> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
-}
-
-export async function GET(request: Request) {
+// Reads the bundled images directly off disk instead of self-fetching them
+// over HTTP from within this same serverless function — the previous
+// self-fetch pattern was the suspected cause of intermittent 503s in
+// production. Direct fs reads have no network round-trip to fail.
+// next.config.ts's outputFileTracingIncludes guarantees these files are
+// actually bundled into the deployed function.
+export async function GET() {
   const panel = getPanel();
   const zip = new JSZip();
 
-  await Promise.all(
-    panel.map(async (member) => {
-      const bytes = await fetchAsBuffer(new URL(`/panel/vto-results/${member.id}.jpg`, request.url));
-      const bandLabel = member.fitzpatrickScale ?? "unmeasured";
-      zip.file(`casting-fitzpatrick-${bandLabel}-${member.id}.jpg`, bytes);
-    }),
-  );
+  for (const member of panel) {
+    const filePath = path.join(process.cwd(), "public", "panel", "vto-results", `${member.id}.jpg`);
+    const bytes = fs.readFileSync(filePath);
+    const bandLabel = member.fitzpatrickScale ?? "unmeasured";
+    zip.file(`casting-fitzpatrick-${bandLabel}-${member.id}.jpg`, bytes);
+  }
 
   zip.file(
     "README.txt",
