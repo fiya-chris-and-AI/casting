@@ -58,7 +58,7 @@ const SD_SKIN_CONCERNS = [
   "firmness", "moisture", "redness", "tear_trough", "skin_type",
 ];
 
-const id = process.argv[2] ?? "panel-fitzpatrick-VI";
+const id = process.argv[2] ?? "person-08";
 const intendedBand = process.argv[3] ?? "VI";
 const ageRange = process.argv[4] ?? "50s";
 const gender = process.argv[5] ?? "man";

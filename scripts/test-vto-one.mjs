@@ -51,7 +51,7 @@ async function runTask(taskPath, payload, { intervalMs = 2000, maxAttempts = 90 
   throw new Error(`Task ${taskPath} timed out polling`);
 }
 
-const personId = "panel-fitzpatrick-VI";
+const personId = "person-08";
 const personBytes = fs.readFileSync(path.join(__dirname, "..", "panel", "body-images", `${personId}.png`));
 const productBytes = fs.readFileSync(path.join(__dirname, "..", "panel", "product-images", "demo-product-tshirt.png"));
 

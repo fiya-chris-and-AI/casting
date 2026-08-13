@@ -4,52 +4,52 @@
   "totalWallClockMs": 28055,
   "perPerson": [
     {
-      "id": "panel-fitzpatrick-I",
+      "id": "person-01",
       "status": "success",
       "wallClockMs": 16579,
-      "localPath": "panel/vto-results/panel-fitzpatrick-I.jpg"
+      "localPath": "panel/vto-results/person-01.jpg"
     },
     {
-      "id": "panel-fitzpatrick-II",
+      "id": "person-02",
       "status": "success",
       "wallClockMs": 16688,
-      "localPath": "panel/vto-results/panel-fitzpatrick-II.jpg"
+      "localPath": "panel/vto-results/person-02.jpg"
     },
     {
-      "id": "panel-fitzpatrick-III",
+      "id": "person-03",
       "status": "success",
       "wallClockMs": 18311,
-      "localPath": "panel/vto-results/panel-fitzpatrick-III.jpg"
+      "localPath": "panel/vto-results/person-03.jpg"
     },
     {
-      "id": "panel-fitzpatrick-III-b",
+      "id": "person-04",
       "status": "success",
       "wallClockMs": 18039,
-      "localPath": "panel/vto-results/panel-fitzpatrick-III-b.jpg"
+      "localPath": "panel/vto-results/person-04.jpg"
     },
     {
-      "id": "panel-fitzpatrick-IV",
+      "id": "person-05",
       "status": "success",
       "wallClockMs": 18261,
-      "localPath": "panel/vto-results/panel-fitzpatrick-IV.jpg"
+      "localPath": "panel/vto-results/person-05.jpg"
     },
     {
-      "id": "panel-fitzpatrick-V",
+      "id": "person-06",
       "status": "success",
       "wallClockMs": 16601,
-      "localPath": "panel/vto-results/panel-fitzpatrick-V.jpg"
+      "localPath": "panel/vto-results/person-06.jpg"
     },
     {
-      "id": "panel-fitzpatrick-V-b",
+      "id": "person-07",
       "status": "success",
       "wallClockMs": 28042,
-      "localPath": "panel/vto-results/panel-fitzpatrick-V-b.jpg"
+      "localPath": "panel/vto-results/person-07.jpg"
     },
     {
-      "id": "panel-fitzpatrick-VI",
+      "id": "person-08",
       "status": "success",
       "wallClockMs": 16533,
-      "localPath": "panel/vto-results/panel-fitzpatrick-VI.jpg"
+      "localPath": "panel/vto-results/person-08.jpg"
     }
   ]
 }

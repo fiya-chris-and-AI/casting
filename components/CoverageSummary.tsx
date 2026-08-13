@@ -1,13 +1,20 @@
 import Link from "next/link";
 import type { CoverageReport } from "@/lib/coverage";
 
+// "and"-joined list, matching the demo script's mandated phrasing exactly
+// (e.g. "I, III, IV and VI") — never "I to VI", never "all six types".
+function andJoin(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
 export function CoverageSummary({ report }: { report: CoverageReport }) {
   return (
     <div className="flex items-center justify-between px-4 py-2 text-xs text-[var(--muted)]">
       <span>
-        Coverage: {report.measurableBands.length} of 6 Fitzpatrick bands measurable with this panel
-        {report.measurableBands.length > 0 && ` (${report.measurableBands.join(", ")})`}
-        {report.unmeasurableBands.length > 0 && ` — not measurable: ${report.unmeasurableBands.join(", ")}`}
+        Eight people, measured — Fitzpatrick {andJoin(report.measurableBands)}.
+        {report.unmeasurableBands.length > 0 &&
+          ` Fitzpatrick ${andJoin(report.unmeasurableBands)} not measurable with this panel.`}
       </span>
       <span className="flex items-center gap-3">
         {report.lowContrastBands.length > 0 && (

@@ -68,14 +68,14 @@ const PANEL_DIR = path.join(__dirname, "..", "panel", "source-images");
 const OUT_PATH = path.join(__dirname, "..", "panel", "panel-data.json");
 
 const PEOPLE = [
-  { id: "panel-fitzpatrick-I", intendedBand: "I", ageRange: "20s", gender: "woman" },
-  { id: "panel-fitzpatrick-II", intendedBand: "II", ageRange: "40s", gender: "man" },
-  { id: "panel-fitzpatrick-III", intendedBand: "III", ageRange: "30s", gender: "man" },
-  { id: "panel-fitzpatrick-III-b", intendedBand: "III", ageRange: "50s", gender: "woman" },
-  { id: "panel-fitzpatrick-IV", intendedBand: "IV", ageRange: "20s", gender: "woman" },
-  { id: "panel-fitzpatrick-V", intendedBand: "V", ageRange: "40s", gender: "man" },
-  { id: "panel-fitzpatrick-V-b", intendedBand: "V", ageRange: "30s", gender: "woman" },
-  { id: "panel-fitzpatrick-VI", intendedBand: "VI", ageRange: "50s", gender: "man" },
+  { id: "person-01", intendedBand: "I", ageRange: "20s", gender: "woman" },
+  { id: "person-02", intendedBand: "II", ageRange: "40s", gender: "man" },
+  { id: "person-03", intendedBand: "III", ageRange: "30s", gender: "man" },
+  { id: "person-04", intendedBand: "III", ageRange: "50s", gender: "woman" },
+  { id: "person-05", intendedBand: "IV", ageRange: "20s", gender: "woman" },
+  { id: "person-06", intendedBand: "V", ageRange: "40s", gender: "man" },
+  { id: "person-07", intendedBand: "V", ageRange: "30s", gender: "woman" },
+  { id: "person-08", intendedBand: "VI", ageRange: "50s", gender: "man" },
 ];
 
 async function measureOne(person) {

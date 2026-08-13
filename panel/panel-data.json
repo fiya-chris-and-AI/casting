@@ -2,7 +2,7 @@
   "generatedAt": "2026-08-12T18:27:31.741Z",
   "panel": [
     {
-      "id": "panel-fitzpatrick-I",
+      "id": "person-01",
       "intendedBand": "I",
       "ageRange": "20s",
       "gender": "woman",
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "panel-fitzpatrick-II",
+      "id": "person-02",
       "intendedBand": "II",
       "ageRange": "40s",
       "gender": "man",
@@ -69,7 +69,7 @@
       "measuredViaAccount": "backup"
     },
     {
-      "id": "panel-fitzpatrick-III",
+      "id": "person-03",
       "intendedBand": "III",
       "ageRange": "30s",
       "gender": "man",
@@ -114,7 +114,7 @@
       }
     },
     {
-      "id": "panel-fitzpatrick-III-b",
+      "id": "person-04",
       "intendedBand": "III",
       "ageRange": "50s",
       "gender": "woman",
@@ -157,7 +157,7 @@
       }
     },
     {
-      "id": "panel-fitzpatrick-IV",
+      "id": "person-05",
       "intendedBand": "IV",
       "ageRange": "20s",
       "gender": "woman",
@@ -179,7 +179,7 @@
       "measuredViaAccount": "backup"
     },
     {
-      "id": "panel-fitzpatrick-V",
+      "id": "person-06",
       "intendedBand": "V",
       "ageRange": "40s",
       "gender": "man",
@@ -224,7 +224,7 @@
       }
     },
     {
-      "id": "panel-fitzpatrick-V-b",
+      "id": "person-07",
       "intendedBand": "V",
       "ageRange": "30s",
       "gender": "woman",
@@ -269,7 +269,7 @@
       }
     },
     {
-      "id": "panel-fitzpatrick-VI",
+      "id": "person-08",
       "intendedBand": "VI",
       "ageRange": "50s",
       "gender": "man",

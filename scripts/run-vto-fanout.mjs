@@ -52,14 +52,14 @@ async function runTask(taskPath, payload, { intervalMs = 2000, maxAttempts = 90 
 }
 
 const PANEL_IDS = [
-  "panel-fitzpatrick-I",
-  "panel-fitzpatrick-II",
-  "panel-fitzpatrick-III",
-  "panel-fitzpatrick-III-b",
-  "panel-fitzpatrick-IV",
-  "panel-fitzpatrick-V",
-  "panel-fitzpatrick-V-b",
-  "panel-fitzpatrick-VI",
+  "person-01",
+  "person-02",
+  "person-03",
+  "person-04",
+  "person-05",
+  "person-06",
+  "person-07",
+  "person-08",
 ];
 
 const BODY_DIR = path.join(__dirname, "..", "panel", "body-images");
