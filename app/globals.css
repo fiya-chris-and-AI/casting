@@ -26,17 +26,6 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-@keyframes tile-fill-in {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 /* /report is a one-page printable coverage report — force a single page,
    no browser header/footer clutter, exact colors so the skin-tone swatches
    print faithfully. */

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 import type { PanelMember } from "@/lib/panel";
 import { getSeedRevealDelayMs, vtoResultPath } from "@/lib/panel";
 import { computeCoverage, type CoverageReport, type MemberDiagnosis } from "@/lib/coverage";
@@ -31,6 +32,34 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
   // or every tile resets to opacity:0 and waits out its delay again (up to
   // 28s), landing on a blank grid right when the fallback notice appears.
   const [hasRevealedOnce, setHasRevealedOnce] = useState(false);
+  // A tile must never read as broken on a cold visit. Two things can leave it
+  // visibly empty: the staggered reveal hasn't reached it yet (delays run up
+  // to 28s — previously the whole figure sat at opacity 0, a bare white hole
+  // in the grid), or the image bytes are still in flight when its turn comes
+  // (observed live at t≈32s on a cold cache). So the tile FRAME (caption +
+  // measured-skin-tone swatch) is visible from the first paint, and only the
+  // IMAGE fades in — once its reveal delay has elapsed AND it has actually
+  // decoded. Keyed by src so seed and live results track independently.
+  const [loadedSrcs, setLoadedSrcs] = useState<Record<string, boolean>>({});
+  const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({});
+
+  // Fetch all 8 seed images from the first byte of the page, in parallel with
+  // the staggered reveal — not when each tile happens to mount.
+  for (const member of panel) {
+    ReactDOM.preload(vtoResultPath(member.id), { as: "image" });
+  }
+
+  useEffect(() => {
+    // The staggered reveal follows the real measured per-person VTO latency.
+    const timers = panel.map((member) =>
+      setTimeout(() => setRevealedIds((prev) => ({ ...prev, [member.id]: true })), getSeedRevealDelayMs(member.id))
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [panel]);
+
+  function markLoaded(src: string) {
+    setLoadedSrcs((prev) => (prev[src] ? prev : { ...prev, [src]: true }));
+  }
 
   async function startRun(file: File | null) {
     setHasRevealedOnce(true);
@@ -178,20 +207,33 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
             imageSrc = vtoResultPath(member.id);
           }
 
+          const imgVisible =
+            imageSrc != null && !!loadedSrcs[imageSrc] && (isLive || hasRevealedOnce || !!revealedIds[member.id]);
+
           return (
             <figure
               key={member.id}
               className="relative m-0 flex h-full w-full min-h-0 cursor-pointer items-center justify-center overflow-hidden bg-[var(--surface)]"
-              style={
-                !isLive && !hasRevealedOnce
-                  ? { opacity: 0, animation: "tile-fill-in 0.6s ease-out forwards", animationDelay: `${getSeedRevealDelayMs(member.id)}ms`, boxShadow: isGap ? "inset 0 -4px 0 0 var(--gap-accent)" : undefined }
-                  : { boxShadow: isGap ? "inset 0 -4px 0 0 var(--gap-accent)" : undefined }
-              }
+              style={{ boxShadow: isGap ? "inset 0 -4px 0 0 var(--gap-accent)" : undefined }}
               onClick={() => diagnosis && setSelectedId(member.id)}
             >
+              {!imgVisible && !statusLabel && (
+                // Deliberate pre-image state: the member's measured skin tone,
+                // never a bare white surface.
+                <span aria-hidden className="h-6 w-6 rounded-full opacity-60" style={{ backgroundColor: member.skinColorHex ?? "var(--muted)" }} />
+              )}
               {imageSrc && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={imageSrc} alt={`Product on a reference person, Fitzpatrick ${member.fitzpatrickScale ?? "unmeasured"}`} className="h-full w-full object-cover object-top" />
+                <img
+                  src={imageSrc}
+                  ref={(el) => {
+                    // Cache hit: the image can be complete before onLoad ever fires.
+                    if (el && el.complete && el.naturalWidth > 0) markLoaded(imageSrc);
+                  }}
+                  onLoad={() => markLoaded(imageSrc)}
+                  alt={`Product on a reference person, Fitzpatrick ${member.fitzpatrickScale ?? "unmeasured"}`}
+                  className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-700 ease-out ${imgVisible ? "opacity-100" : "opacity-0"}`}
+                />
               )}
               {!imageSrc && statusLabel && <span className="px-3 text-center text-xs text-[var(--muted)]">{statusLabel}</span>}
               <figcaption
