@@ -25,7 +25,21 @@ type StreamMessage =
   | { type: "capped"; message: string }
   | { type: "fatal"; error: string };
 
+// Live runs are open by default in local dev (LIVE_ACCESS_CODE unset); in
+// deployed environments this gates the two live-run buttons behind a code
+// given to jurors in the Devpost testing instructions. The daily unit
+// budget in lib/rate-limit.ts remains the second line of defense.
+function isLiveAccessAuthorized(request: Request): boolean {
+  const requiredCode = process.env.LIVE_ACCESS_CODE;
+  if (!requiredCode) return true;
+  return request.headers.get("x-live-access-code") === requiredCode;
+}
+
 export async function POST(request: Request) {
+  if (!isLiveAccessAuthorized(request)) {
+    return Response.json({ error: "Live runs require an access code. See the Devpost testing instructions." }, { status: 401 });
+  }
+
   const startedAt = Date.now();
   const body = (await request.json().catch(() => null)) as {
     productImageBase64?: string;

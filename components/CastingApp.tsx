@@ -19,6 +19,19 @@ type Mode = "seed" | "running" | "live-done" | "capped";
 
 type LiveResultsById = Record<string, PanelFanoutResult>;
 
+// Live runs spend real YouCam units — gated behind a short access code so a
+// stray link can't drain the judging-window budget (see lib/rate-limit.ts,
+// the second line of defense behind this one). Session-scoped so a juror
+// only types it once. Server-side truth lives in LIVE_ACCESS_CODE; this key
+// only caches what the user already proved works.
+const ACCESS_CODE_STORAGE_KEY = "casting-live-access-code";
+const ACCESS_CODE_HEADER = "x-live-access-code";
+
+function getStoredAccessCode(): string {
+  if (typeof window === "undefined") return "";
+  return sessionStorage.getItem(ACCESS_CODE_STORAGE_KEY) ?? "";
+}
+
 export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: CastingAppProps) {
   const [mode, setMode] = useState<Mode>("seed");
   const [liveResults, setLiveResults] = useState<LiveResultsById>({});
@@ -42,6 +55,9 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
   // decoded. Keyed by src so seed and live results track independently.
   const [loadedSrcs, setLoadedSrcs] = useState<Record<string, boolean>>({});
   const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({});
+  const [pendingLiveAction, setPendingLiveAction] = useState<"upload" | "demo" | null>(null);
+  const [accessCodeInput, setAccessCodeInput] = useState("");
+  const [accessError, setAccessError] = useState<string | null>(null);
 
   // Fetch all 8 seed images from the first byte of the page, in parallel with
   // the staggered reveal — not when each tile happens to mount.
@@ -61,7 +77,29 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
     setLoadedSrcs((prev) => (prev[src] ? prev : { ...prev, [src]: true }));
   }
 
-  async function startRun(file: File | null) {
+  function requestLiveRun(action: "upload" | "demo") {
+    const storedCode = getStoredAccessCode();
+    if (storedCode) {
+      if (action === "upload") fileInputRef.current?.click();
+      else startRun(null, storedCode);
+      return;
+    }
+    setAccessError(null);
+    setPendingLiveAction(action);
+  }
+
+  function confirmAccessCode() {
+    const code = accessCodeInput.trim();
+    if (!code) return;
+    sessionStorage.setItem(ACCESS_CODE_STORAGE_KEY, code);
+    setAccessCodeInput("");
+    const action = pendingLiveAction;
+    setPendingLiveAction(null);
+    if (action === "upload") fileInputRef.current?.click();
+    else if (action === "demo") startRun(null, code);
+  }
+
+  async function startRun(file: File | null, accessCode: string) {
     setHasRevealedOnce(true);
     setMode("running");
     setLiveResults({});
@@ -89,9 +127,17 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
     try {
       const res = await fetch("/api/fanout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", [ACCESS_CODE_HEADER]: accessCode },
         body: JSON.stringify(productImageBase64 ? { productImageBase64, contentType } : {}),
       });
+
+      if (res.status === 401) {
+        sessionStorage.removeItem(ACCESS_CODE_STORAGE_KEY);
+        setMode("seed");
+        setAccessError("That access code didn't work. Jurors: check the Devpost testing instructions.");
+        setPendingLiveAction(file ? "upload" : "demo");
+        return;
+      }
 
       if (!res.ok || !res.body) {
         fallBackToSeed("Live run couldn't start. Showing a precomputed run instead.");
@@ -159,7 +205,7 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
             {isLive ? "● live run — real API calls" : "precomputed demo run"}
           </span>
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => requestLiveRun("upload")}
             disabled={mode === "running"}
             className="rounded border border-[var(--muted)] px-2 py-1 text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-50"
           >
@@ -172,11 +218,11 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0] ?? null;
-              if (file) startRun(file);
+              if (file) startRun(file, getStoredAccessCode());
             }}
           />
           <button
-            onClick={() => startRun(null)}
+            onClick={() => requestLiveRun("demo")}
             disabled={mode === "running"}
             className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)] disabled:opacity-50"
           >
@@ -185,6 +231,49 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
         </div>
         {fallbackNotice && <span className="text-[color:var(--gap-accent)]">{fallbackNotice}</span>}
       </div>
+
+      {pendingLiveAction && (
+        <div className="flex flex-col gap-1 px-4 pb-2 text-xs">
+          <form
+            className="flex items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              confirmAccessCode();
+            }}
+          >
+            <input
+              autoFocus
+              type="password"
+              value={accessCodeInput}
+              onChange={(e) => setAccessCodeInput(e.target.value)}
+              placeholder="access code"
+              className="rounded border border-[var(--muted)] bg-transparent px-2 py-1 text-[var(--foreground)] outline-none"
+            />
+            <button
+              type="submit"
+              disabled={!accessCodeInput.trim()}
+              className="rounded border border-[var(--muted)] px-2 py-1 text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-50"
+            >
+              Confirm
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPendingLiveAction(null);
+                setAccessCodeInput("");
+                setAccessError(null);
+              }}
+              className="text-[var(--muted)] hover:text-[var(--foreground)]"
+            >
+              cancel
+            </button>
+          </form>
+          <span className="text-[var(--muted)]">
+            Live runs spend real API units. Jurors: the code is in the Devpost testing instructions.
+          </span>
+          {accessError && <span className="text-[var(--muted)]">{accessError}</span>}
+        </div>
+      )}
 
       {showingCoverage && <CoverageSummary report={showingCoverage} />}
 
