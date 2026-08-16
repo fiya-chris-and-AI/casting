@@ -326,25 +326,33 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
           </button>
         </div>
 
-        {fallbackNotice && (
-          <span
-            className="justify-self-start text-[color:var(--gap-accent)] min-[900px]:col-start-3 min-[900px]:justify-self-end min-[900px]:text-right"
+        <div className="flex items-center gap-3 justify-self-start min-[900px]:col-start-3 min-[900px]:justify-self-end">
+          {fallbackNotice && (
+            <span className="text-[color:var(--gap-accent)] min-[900px]:text-right">
+              {fallbackNotice}
+              {budgetCappedHint && (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    onClick={() => openLiveAccessPopover("demo")}
+                    className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)]"
+                  >
+                    …or run it on your own YouCam API key
+                  </button>
+                </>
+              )}
+            </span>
+          )}
+          {/* solid gold = the accent cell in the CASTING mark; deliberately loud so jurors click it */}
+          <Link
+            href="/client-demo"
+            className="flex-none rounded border border-transparent px-2 py-1 font-semibold hover:brightness-95"
+            style={{ backgroundColor: "#E0B93F", color: "#1c1b1a" }}
           >
-            {fallbackNotice}
-            {budgetCappedHint && (
-              <>
-                {" "}
-                <button
-                  type="button"
-                  onClick={() => openLiveAccessPopover("demo")}
-                  className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)]"
-                >
-                  …or run it on your own YouCam API key
-                </button>
-              </>
-            )}
-          </span>
-        )}
+            Client demo
+          </Link>
+        </div>
       </div>
 
       {liveAccessPopoverOpen && (
