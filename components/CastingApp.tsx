@@ -74,6 +74,17 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
   const [budgetCappedHint, setBudgetCappedHint] = useState(false);
+  // Below ~1100px the right link group would wrap; shorten the "Live runs"
+  // label instead of letting it break onto a second line.
+  const [isNarrowLinkGroup, setIsNarrowLinkGroup] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1099px)");
+    const update = () => setIsNarrowLinkGroup(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   // Fetch all 8 seed images from the first byte of the page, in parallel with
   // the staggered reveal — not when each tile happens to mount.
@@ -254,7 +265,13 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
   const selected = selectedId ? diagnosisByPanelId[selectedId] : null;
 
   const liveAccessLabel =
-    activeAuthMode === "key" ? "Live runs · own key" : activeAuthMode === "code" ? "Live runs · access code" : "Live runs";
+    activeAuthMode === "key"
+      ? "Live runs · own key"
+      : activeAuthMode === "code"
+        ? "Live runs · access code"
+        : isNarrowLinkGroup
+          ? "Live runs — code or own key"
+          : "Live runs — access code or your own YouCam key";
 
   return (
     <div className="relative flex h-full w-full flex-col">
@@ -262,11 +279,11 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
         <Link
           href="/"
           aria-label="CASTING — home"
-          className="flex items-center gap-2 justify-self-start min-[900px]:col-start-2 min-[900px]:justify-self-center"
+          className="flex h-8 items-center gap-2.5 justify-self-start min-[900px]:col-start-2 min-[900px]:justify-self-center"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/casting-mark-light.svg" alt="" aria-hidden className="h-4 w-auto" />
-          <span className="font-semibold" style={{ fontSize: 11, letterSpacing: "0.15em", color: "#111111" }}>
+          <img src="/brand/casting-mark-light.svg" alt="" aria-hidden className="h-[13px] w-auto" />
+          <span className="font-semibold" style={{ fontSize: 14, letterSpacing: "0.15em", color: "#111111" }}>
             CASTING
           </span>
         </Link>
