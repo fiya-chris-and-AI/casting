@@ -48,6 +48,7 @@ export async function tryOnClothes(
   personSource: SourceRef,
   garmentSource: { ref_file_id: string } | { ref_file_url: string },
   garmentCategory: "full_body" | "lower_body" | "upper_body" | "shoes" | "outer" | "auto" = "auto",
+  apiKey?: string,
 ): Promise<TaskResult> {
   return runTask(
     "/s2s/v2.0/task/cloth-v4",
@@ -57,5 +58,6 @@ export async function tryOnClothes(
       garment_category: garmentCategory,
     },
     { intervalMs: 2000, maxAttempts: 90 },
+    apiKey,
   );
 }

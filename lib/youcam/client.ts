@@ -23,7 +23,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
   }
 }
 
-async function youcamFetch(path: string, init: RequestInit, retries = 2): Promise<unknown> {
+async function youcamFetch(path: string, init: RequestInit, retries = 2, apiKey?: string): Promise<unknown> {
   const url = path.startsWith("http") ? path : `${youcamConfig.baseUrl}${path}`;
   let lastError: unknown;
 
@@ -33,7 +33,7 @@ async function youcamFetch(path: string, init: RequestInit, retries = 2): Promis
         fetch(url, {
           ...init,
           headers: {
-            Authorization: `Bearer ${youcamConfig.apiKey}`,
+            Authorization: `Bearer ${apiKey ?? youcamConfig.apiKey}`,
             "Content-Type": "application/json",
             ...init.headers,
           },
@@ -76,13 +76,18 @@ interface FileUploadResponse {
   files?: FileUploadEntry[];
 }
 
-export async function uploadFile(bytes: Buffer, fileName: string, contentType: string): Promise<UploadedFile> {
-  const createRes = (await youcamFetch("/s2s/v2.0/file", {
-    method: "POST",
-    body: JSON.stringify({
-      files: [{ content_type: contentType, file_name: fileName, file_size: bytes.length }],
-    }),
-  })) as FileUploadResponse;
+export async function uploadFile(bytes: Buffer, fileName: string, contentType: string, apiKey?: string): Promise<UploadedFile> {
+  const createRes = (await youcamFetch(
+    "/s2s/v2.0/file",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        files: [{ content_type: contentType, file_name: fileName, file_size: bytes.length }],
+      }),
+    },
+    2,
+    apiKey,
+  )) as FileUploadResponse;
 
   const fileEntry = createRes?.data?.files?.[0] ?? createRes?.files?.[0];
   if (!fileEntry) {
@@ -125,11 +130,16 @@ interface TaskEnvelope {
   results?: unknown;
 }
 
-export async function startTask(taskPath: string, payload: Record<string, unknown>): Promise<string> {
-  const res = (await youcamFetch(taskPath, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  })) as TaskEnvelope;
+export async function startTask(taskPath: string, payload: Record<string, unknown>, apiKey?: string): Promise<string> {
+  const res = (await youcamFetch(
+    taskPath,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    2,
+    apiKey,
+  )) as TaskEnvelope;
   const taskId = res?.data?.task_id ?? res?.task_id;
   if (!taskId) {
     throw new YouCamApiError("Task start response missing task_id", 502, res);
@@ -141,12 +151,13 @@ export async function pollTask(
   taskPath: string,
   taskId: string,
   opts: { intervalMs?: number; maxAttempts?: number } = {},
+  apiKey?: string,
 ): Promise<TaskResult> {
   const intervalMs = opts.intervalMs ?? 2000;
   const maxAttempts = opts.maxAttempts ?? 60;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const res = (await youcamFetch(`${taskPath}/${taskId}`, { method: "GET" })) as TaskEnvelope;
+    const res = (await youcamFetch(`${taskPath}/${taskId}`, { method: "GET" }, 2, apiKey)) as TaskEnvelope;
     const data = res?.data ?? res;
     const status = data?.task_status as TaskResult["status"] | undefined;
 
@@ -166,9 +177,10 @@ export async function runTask(
   taskPath: string,
   payload: Record<string, unknown>,
   pollOpts?: { intervalMs?: number; maxAttempts?: number },
+  apiKey?: string,
 ): Promise<TaskResult> {
-  const taskId = await startTask(taskPath, payload);
-  return pollTask(taskPath, taskId, pollOpts);
+  const taskId = await startTask(taskPath, payload, apiKey);
+  return pollTask(taskPath, taskId, pollOpts, apiKey);
 }
 
 interface CreditToken {
@@ -176,7 +188,7 @@ interface CreditToken {
 }
 
 /** Real, live account balance — GET /s2s/v1.0/client/credit, read-only, does not itself spend units. */
-export async function getYoucamCreditBalance(): Promise<number> {
-  const res = (await youcamFetch("/s2s/v1.0/client/credit", { method: "GET" })) as { results?: CreditToken[] };
+export async function getYoucamCreditBalance(apiKey?: string): Promise<number> {
+  const res = (await youcamFetch("/s2s/v1.0/client/credit", { method: "GET" }, 2, apiKey)) as { results?: CreditToken[] };
   return (res.results ?? []).reduce((sum, token) => sum + (token.amount ?? 0), 0);
 }

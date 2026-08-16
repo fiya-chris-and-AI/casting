@@ -1,6 +1,7 @@
 import { runPanelFanout, type PanelFanoutResult } from "@/lib/youcam/fanout";
 import { getPanel } from "@/lib/panel";
 import { checkLiveRunBudget, recordLiveRun } from "@/lib/rate-limit";
+import { getYoucamCreditBalance } from "@/lib/youcam/client";
 
 // The real fan-out call: ~28-34s measured wall-clock across 8 parallel
 // Apparel VTO calls (see panel/vto-latency-report.json). Must outlive
@@ -35,8 +36,23 @@ function isLiveAccessAuthorized(request: Request): boolean {
   return request.headers.get("x-live-access-code") === requiredCode;
 }
 
+// A juror's own YouCam API key bypasses our access code AND our daily unit
+// budget entirely — the budget only protects OUR account, and BYOK calls
+// never touch it. The key is read from this one request header, used only
+// for this request's VTO calls, and never persisted, logged, or echoed back
+// (including inside error messages).
+const API_KEY_HEADER = "x-youcam-api-key";
+
 export async function POST(request: Request) {
-  if (!isLiveAccessAuthorized(request)) {
+  const byokKey = request.headers.get(API_KEY_HEADER)?.trim() || null;
+
+  if (byokKey) {
+    try {
+      await getYoucamCreditBalance(byokKey);
+    } catch {
+      return Response.json({ error: "Perfect Corp rejected this key" }, { status: 401 });
+    }
+  } else if (!isLiveAccessAuthorized(request)) {
     return Response.json({ error: "Live runs require an access code. See the Devpost testing instructions." }, { status: 401 });
   }
 
@@ -56,11 +72,16 @@ export async function POST(request: Request) {
       // lib/rate-limit.ts) before a single unit is spent. When it trips, no
       // YouCam call is made at all — the client falls back to the
       // precomputed seed run instead of ever showing a broken or empty page.
-      const budget = await checkLiveRunBudget();
-      if (!budget.allowed) {
-        send({ type: "capped", message: budget.reason ?? "Live API budget unavailable. Showing a precomputed run instead." });
-        controller.close();
-        return;
+      // A juror's own key spends from THEIR account, not ours, so it skips
+      // this guard entirely — YOUCAM_MAX_CALLS_PER_RUN (checked inside
+      // runPanelFanout) remains the only cap on a BYOK run.
+      if (!byokKey) {
+        const budget = await checkLiveRunBudget();
+        if (!budget.allowed) {
+          send({ type: "capped", message: budget.reason ?? "Live API budget unavailable. Showing a precomputed run instead." });
+          controller.close();
+          return;
+        }
       }
 
       try {
@@ -85,9 +106,14 @@ export async function POST(request: Request) {
           })),
         );
 
-        recordLiveRun();
-        const results = await runPanelFanout(productBytes, productContentType, panelMembers, "upper_body", (result) =>
-          send({ type: "progress", result }),
+        if (!byokKey) recordLiveRun();
+        const results = await runPanelFanout(
+          productBytes,
+          productContentType,
+          panelMembers,
+          "upper_body",
+          (result) => send({ type: "progress", result }),
+          byokKey ?? undefined,
         );
 
         send({ type: "done", wallClockMs: Date.now() - startedAt, results });

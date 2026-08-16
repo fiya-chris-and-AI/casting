@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
+import Link from "next/link";
 import type { PanelMember } from "@/lib/panel";
 import { getSeedRevealDelayMs, vtoResultPath } from "@/lib/panel";
 import { computeCoverage, type CoverageReport, type MemberDiagnosis } from "@/lib/coverage";
@@ -19,17 +20,27 @@ type Mode = "seed" | "running" | "live-done" | "capped";
 
 type LiveResultsById = Record<string, PanelFanoutResult>;
 
-// Live runs spend real YouCam units — gated behind a short access code so a
-// stray link can't drain the judging-window budget (see lib/rate-limit.ts,
-// the second line of defense behind this one). Session-scoped so a juror
-// only types it once. Server-side truth lives in LIVE_ACCESS_CODE; this key
-// only caches what the user already proved works.
+// Live runs spend real YouCam units — gated behind a short access code (or
+// a juror's own YouCam API key) so a stray link can't drain the
+// judging-window budget (see lib/rate-limit.ts, the second line of defense
+// behind this one). Session-scoped so a juror only enters it once.
+// Server-side truth lives in LIVE_ACCESS_CODE; these keys only cache what
+// the user already proved works. Only one credential is ever stored at a
+// time — confirming one clears the other, so "the active mode" is unambiguous.
 const ACCESS_CODE_STORAGE_KEY = "casting-live-access-code";
+const API_KEY_STORAGE_KEY = "casting-live-api-key";
 const ACCESS_CODE_HEADER = "x-live-access-code";
+const API_KEY_HEADER = "x-youcam-api-key";
 
-function getStoredAccessCode(): string {
-  if (typeof window === "undefined") return "";
-  return sessionStorage.getItem(ACCESS_CODE_STORAGE_KEY) ?? "";
+type LiveAuth = { kind: "code"; value: string } | { kind: "key"; value: string };
+
+function getStoredAuth(): LiveAuth | null {
+  if (typeof window === "undefined") return null;
+  const key = sessionStorage.getItem(API_KEY_STORAGE_KEY);
+  if (key) return { kind: "key", value: key };
+  const code = sessionStorage.getItem(ACCESS_CODE_STORAGE_KEY);
+  if (code) return { kind: "code", value: code };
+  return null;
 }
 
 export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: CastingAppProps) {
@@ -56,8 +67,13 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
   const [loadedSrcs, setLoadedSrcs] = useState<Record<string, boolean>>({});
   const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({});
   const [pendingLiveAction, setPendingLiveAction] = useState<"upload" | "demo" | null>(null);
+  const [liveAccessPopoverOpen, setLiveAccessPopoverOpen] = useState(false);
+  const [activeAuthMode, setActiveAuthMode] = useState<"code" | "key" | null>(() => getStoredAuth()?.kind ?? null);
   const [accessCodeInput, setAccessCodeInput] = useState("");
   const [accessError, setAccessError] = useState<string | null>(null);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+  const [budgetCappedHint, setBudgetCappedHint] = useState(false);
 
   // Fetch all 8 seed images from the first byte of the page, in parallel with
   // the staggered reveal — not when each tile happens to mount.
@@ -78,32 +94,68 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
   }
 
   function requestLiveRun(action: "upload" | "demo") {
-    const storedCode = getStoredAccessCode();
-    if (storedCode) {
+    const auth = getStoredAuth();
+    if (auth) {
       if (action === "upload") fileInputRef.current?.click();
-      else startRun(null, storedCode);
+      else startRun(null, auth);
       return;
     }
     setAccessError(null);
+    setApiKeyError(null);
     setPendingLiveAction(action);
+    setLiveAccessPopoverOpen(true);
+  }
+
+  function openLiveAccessPopover(action: "upload" | "demo" | null = null) {
+    setAccessError(null);
+    setApiKeyError(null);
+    setPendingLiveAction(action);
+    setLiveAccessPopoverOpen(true);
+  }
+
+  function closeLiveAccessPopover() {
+    setLiveAccessPopoverOpen(false);
+    setPendingLiveAction(null);
+    setAccessError(null);
+    setApiKeyError(null);
+  }
+
+  function runOrClosePopover(auth: LiveAuth) {
+    const action = pendingLiveAction;
+    setPendingLiveAction(null);
+    setLiveAccessPopoverOpen(false);
+    if (action === "upload") fileInputRef.current?.click();
+    else if (action === "demo") startRun(null, auth);
   }
 
   function confirmAccessCode() {
     const code = accessCodeInput.trim();
     if (!code) return;
     sessionStorage.setItem(ACCESS_CODE_STORAGE_KEY, code);
+    sessionStorage.removeItem(API_KEY_STORAGE_KEY);
+    setActiveAuthMode("code");
     setAccessCodeInput("");
-    const action = pendingLiveAction;
-    setPendingLiveAction(null);
-    if (action === "upload") fileInputRef.current?.click();
-    else if (action === "demo") startRun(null, code);
+    setAccessError(null);
+    runOrClosePopover({ kind: "code", value: code });
   }
 
-  async function startRun(file: File | null, accessCode: string) {
+  function confirmApiKey() {
+    const key = apiKeyInput.trim();
+    if (!key) return;
+    sessionStorage.setItem(API_KEY_STORAGE_KEY, key);
+    sessionStorage.removeItem(ACCESS_CODE_STORAGE_KEY);
+    setActiveAuthMode("key");
+    setApiKeyInput("");
+    setApiKeyError(null);
+    runOrClosePopover({ kind: "key", value: key });
+  }
+
+  async function startRun(file: File | null, auth: LiveAuth) {
     setHasRevealedOnce(true);
     setMode("running");
     setLiveResults({});
     setFallbackNotice(null);
+    setBudgetCappedHint(false);
 
     let productImageBase64: string | undefined;
     let contentType = "image/png";
@@ -127,15 +179,25 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
     try {
       const res = await fetch("/api/fanout", {
         method: "POST",
-        headers: { "Content-Type": "application/json", [ACCESS_CODE_HEADER]: accessCode },
+        headers: {
+          "Content-Type": "application/json",
+          [auth.kind === "code" ? ACCESS_CODE_HEADER : API_KEY_HEADER]: auth.value,
+        },
         body: JSON.stringify(productImageBase64 ? { productImageBase64, contentType } : {}),
       });
 
       if (res.status === 401) {
-        sessionStorage.removeItem(ACCESS_CODE_STORAGE_KEY);
+        if (auth.kind === "code") {
+          sessionStorage.removeItem(ACCESS_CODE_STORAGE_KEY);
+          setAccessError("That access code didn't work. Jurors: check the Devpost testing instructions.");
+        } else {
+          sessionStorage.removeItem(API_KEY_STORAGE_KEY);
+          setApiKeyError("Perfect Corp rejected this key.");
+        }
+        setActiveAuthMode(null);
         setMode("seed");
-        setAccessError("That access code didn't work. Jurors: check the Devpost testing instructions.");
         setPendingLiveAction(file ? "upload" : "demo");
+        setLiveAccessPopoverOpen(true);
         return;
       }
 
@@ -167,7 +229,7 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
           } else if (message.type === "done") {
             setMode("live-done");
           } else if (message.type === "capped") {
-            fallBackToSeed(message.message);
+            fallBackToSeed(message.message, { budgetCapped: auth.kind !== "key" });
             return;
           } else if (message.type === "fatal") {
             fallBackToSeed("Live run hit an error. Showing a precomputed run instead.");
@@ -180,8 +242,9 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
     }
   }
 
-  function fallBackToSeed(message: string) {
+  function fallBackToSeed(message: string, opts?: { budgetCapped?: boolean }) {
     setFallbackNotice(message);
+    setBudgetCappedHint(!!opts?.budgetCapped);
     setMode("capped");
   }
 
@@ -190,10 +253,25 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
   const diagnosisByPanelId = isLive ? liveDiagnosisByPanelId : seedDiagnosisByPanelId;
   const selected = selectedId ? diagnosisByPanelId[selectedId] : null;
 
+  const liveAccessLabel =
+    activeAuthMode === "key" ? "Live runs · own key" : activeAuthMode === "code" ? "Live runs · access code" : "Live runs";
+
   return (
     <div className="relative flex h-full w-full flex-col">
-      <div className="flex items-center justify-between gap-4 px-4 py-2 text-xs">
-        <div className="flex items-center gap-3">
+      <div className="grid grid-cols-1 items-center gap-2 px-4 py-2 text-xs min-[900px]:grid-cols-3">
+        <Link
+          href="/"
+          aria-label="CASTING — home"
+          className="flex items-center gap-2 justify-self-start min-[900px]:col-start-2 min-[900px]:justify-self-center"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/casting-mark-light.svg" alt="" aria-hidden className="h-4 w-auto" />
+          <span className="font-semibold" style={{ fontSize: 11, letterSpacing: "0.15em", color: "#111111" }}>
+            CASTING
+          </span>
+        </Link>
+
+        <div className="flex items-center gap-3 min-[900px]:col-start-1">
           <span
             className="rounded px-2 py-0.5 font-medium"
             style={
@@ -218,7 +296,8 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0] ?? null;
-              if (file) startRun(file, getStoredAccessCode());
+              const auth = getStoredAuth();
+              if (file && auth) startRun(file, auth);
             }}
           />
           <button
@@ -229,53 +308,104 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
             {mode === "running" ? "Running…" : "Run it live with the demo product"}
           </button>
         </div>
-        {fallbackNotice && <span className="text-[color:var(--gap-accent)]">{fallbackNotice}</span>}
+
+        {fallbackNotice && (
+          <span
+            className="justify-self-start text-[color:var(--gap-accent)] min-[900px]:col-start-3 min-[900px]:justify-self-end min-[900px]:text-right"
+          >
+            {fallbackNotice}
+            {budgetCappedHint && (
+              <>
+                {" "}
+                <button
+                  type="button"
+                  onClick={() => openLiveAccessPopover("demo")}
+                  className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)]"
+                >
+                  …or run it on your own YouCam API key
+                </button>
+              </>
+            )}
+          </span>
+        )}
       </div>
 
-      {pendingLiveAction && (
-        <div className="flex flex-col gap-1 px-4 pb-2 text-xs">
+      {liveAccessPopoverOpen && (
+        <div className="absolute right-4 top-10 z-20 w-80 rounded-md border border-[var(--muted)] bg-[var(--surface)] p-3 text-xs shadow-lg">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="font-medium text-[var(--foreground)]">Live runs</span>
+            <button type="button" onClick={closeLiveAccessPopover} className="text-[var(--muted)] hover:text-[var(--foreground)]">
+              close
+            </button>
+          </div>
+
           <form
-            className="flex items-center gap-2"
+            className="mb-3 flex flex-col gap-1"
             onSubmit={(e) => {
               e.preventDefault();
               confirmAccessCode();
             }}
           >
-            <input
-              autoFocus
-              type="password"
-              value={accessCodeInput}
-              onChange={(e) => setAccessCodeInput(e.target.value)}
-              placeholder="access code"
-              className="rounded border border-[var(--muted)] bg-transparent px-2 py-1 text-[var(--foreground)] outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!accessCodeInput.trim()}
-              className="rounded border border-[var(--muted)] px-2 py-1 text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-50"
-            >
-              Confirm
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPendingLiveAction(null);
-                setAccessCodeInput("");
-                setAccessError(null);
-              }}
-              className="text-[var(--muted)] hover:text-[var(--foreground)]"
-            >
-              cancel
-            </button>
+            <span className="font-medium text-[var(--foreground)]">Use CASTING&apos;s budget</span>
+            <div className="flex items-center gap-2">
+              <input
+                autoFocus
+                type="password"
+                value={accessCodeInput}
+                onChange={(e) => setAccessCodeInput(e.target.value)}
+                placeholder="access code"
+                className="min-w-0 flex-1 rounded border border-[var(--muted)] bg-transparent px-2 py-1 text-[var(--foreground)] outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!accessCodeInput.trim()}
+                className="rounded border border-[var(--muted)] px-2 py-1 text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-50"
+              >
+                Confirm
+              </button>
+            </div>
+            <span className="text-[var(--muted)]">
+              Jurors: the code is in the Devpost testing instructions. Live runs spend real API units; the app caps them per day.
+            </span>
+            {accessError && <span className="text-[var(--muted)]">{accessError}</span>}
           </form>
-          <span className="text-[var(--muted)]">
-            Live runs spend real API units. Jurors: the code is in the Devpost testing instructions.
-          </span>
-          {accessError && <span className="text-[var(--muted)]">{accessError}</span>}
+
+          <form
+            className="flex flex-col gap-1"
+            onSubmit={(e) => {
+              e.preventDefault();
+              confirmApiKey();
+            }}
+          >
+            <span className="font-medium text-[var(--foreground)]">Use your own YouCam API key</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="password"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="API key"
+                className="min-w-0 flex-1 rounded border border-[var(--muted)] bg-transparent px-2 py-1 text-[var(--foreground)] outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!apiKeyInput.trim()}
+                className="rounded border border-[var(--muted)] px-2 py-1 text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-50"
+              >
+                Confirm
+              </button>
+            </div>
+            <span className="text-[var(--muted)]">
+              Sent with each run straight to Perfect Corp through our server. Never stored, never logged; kept only in this
+              browser tab.
+            </span>
+            {apiKeyError && <span className="text-[var(--muted)]">{apiKeyError}</span>}
+          </form>
         </div>
       )}
 
-      {showingCoverage && <CoverageSummary report={showingCoverage} />}
+      {showingCoverage && (
+        <CoverageSummary report={showingCoverage} liveAccessLabel={liveAccessLabel} onOpenLiveAccess={() => openLiveAccessPopover()} />
+      )}
 
       <div
         className="grid min-h-0 flex-1 gap-px"

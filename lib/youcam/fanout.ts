@@ -26,6 +26,7 @@ export async function runPanelFanout(
   panelMembers: FanoutInput[],
   garmentCategory: Parameters<typeof tryOnClothes>[2] = "upper_body",
   onProgress?: (result: PanelFanoutResult) => void,
+  apiKey?: string,
 ): Promise<PanelFanoutResult[]> {
   if (panelMembers.length > youcamConfig.maxCallsPerRun) {
     throw new Error(
@@ -33,16 +34,17 @@ export async function runPanelFanout(
     );
   }
 
-  const garment = await uploadFile(productImageBytes, "product.png", productContentType);
+  const garment = await uploadFile(productImageBytes, "product.png", productContentType, apiKey);
 
   const runOne = async (member: FanoutInput): Promise<PanelFanoutResult> => {
     onProgress?.({ panelId: member.panelId, status: "processing", resultImageUrl: null, error: null });
     try {
-      const person = await uploadFile(member.bodyImageBytes, `${member.panelId}.png`, "image/png");
+      const person = await uploadFile(member.bodyImageBytes, `${member.panelId}.png`, "image/png", apiKey);
       const task = await tryOnClothes(
         { src_file_id: person.fileId },
         { ref_file_id: garment.fileId },
         garmentCategory,
+        apiKey,
       );
 
       if (task.status !== "success") {

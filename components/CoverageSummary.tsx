@@ -8,7 +8,15 @@ function andJoin(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
-export function CoverageSummary({ report }: { report: CoverageReport }) {
+export function CoverageSummary({
+  report,
+  liveAccessLabel,
+  onOpenLiveAccess,
+}: {
+  report: CoverageReport;
+  liveAccessLabel?: string;
+  onOpenLiveAccess?: () => void;
+}) {
   return (
     <div className="flex items-center justify-between px-4 py-2 text-xs text-[var(--muted)]">
       <span>
@@ -17,6 +25,11 @@ export function CoverageSummary({ report }: { report: CoverageReport }) {
           ` Fitzpatrick ${andJoin(report.unmeasurableBands)} not measurable with this panel.`}
       </span>
       <span className="flex items-center gap-3">
+        {onOpenLiveAccess && (
+          <button type="button" onClick={onOpenLiveAccess} className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)]">
+            {liveAccessLabel ?? "Live runs"}
+          </button>
+        )}
         {report.lowContrastBands.length > 0 && (
           <span className="text-[color:var(--gap-accent)]">● low contrast at {report.lowContrastBands.join(", ")}</span>
         )}
