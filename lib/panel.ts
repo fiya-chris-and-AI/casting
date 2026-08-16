@@ -1,5 +1,4 @@
 import panelDataRaw from "@/panel/panel-data.json";
-import latencyReportRaw from "@/panel/vto-latency-report.json";
 
 export interface PanelMember {
   id: string;
@@ -34,22 +33,14 @@ export function vtoResultPath(id: string): string {
   return `/panel/vto-results/${id}.jpg`;
 }
 
-interface LatencyEntry {
-  id: string;
-  status: string;
-  wallClockMs: number;
-}
-
-const LATENCY_BY_ID: Record<string, number> = Object.fromEntries(
-  (latencyReportRaw as { perPerson: LatencyEntry[] }).perPerson.map((p) => [p.id, p.wallClockMs]),
-);
+const SEED_REVEAL_STEP_MS = 140;
+const BOARD_ORDER: string[] = getPanel().map((m) => m.id);
 
 /**
- * The seed run's reveal delay per panel member — the REAL measured wall-clock
- * time that person's VTO call took (panel/vto-latency-report.json), not a
- * flat interval. A faster-looking fallback would misrepresent the product
- * the moment someone times the video against the live app.
+ * Seed run reveal is a fast stagger (the "one image becomes eight" gesture);
+ * real per-person latency is only shown on live runs.
  */
 export function getSeedRevealDelayMs(panelId: string): number {
-  return LATENCY_BY_ID[panelId] ?? 0;
+  const index = BOARD_ORDER.indexOf(panelId);
+  return index === -1 ? 0 : index * SEED_REVEAL_STEP_MS;
 }
