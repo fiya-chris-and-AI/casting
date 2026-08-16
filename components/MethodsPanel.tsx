@@ -44,7 +44,7 @@ export function MethodsPanel() {
       <p className="mb-6">
         All eight reference images are AI-generated (Gemini 3.1 Flash Image) — fictional people, not real
         individuals, not photographs of anyone. We chose this over sourcing real photos to avoid a likeness/consent
-        problem entirely rather than manage one. Marked <code>[GEMOCKT/KURATIERT]</code> in the build brief.
+        problem entirely rather than manage one.
       </p>
 
       <h2 className="mb-2 font-medium">Contrast diagnosis: how the threshold was chosen</h2>

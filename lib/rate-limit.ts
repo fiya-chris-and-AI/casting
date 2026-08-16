@@ -21,8 +21,8 @@ export const MEASURED_UNITS_PER_RUN = 16;
  * only allowed if the balance minus the reserve for later tranches still
  * covers one run.
  *
- *   Tranche 1 — now through Feature-Freeze (Sun 2026-08-16 12:00 CEST):
- *     rest-of-build testing, Examiner Round 2, demo rehearsals.
+ *   Tranche 1 — now through Sun 2026-08-16 12:00 CEST:
+ *     rest-of-build testing, QA rounds, demo rehearsals.
  *   Tranche 2 — the video recording morning (Mon 2026-08-17, until the
  *     12:00 submission deadline): untouchable reserve for retakes.
  *   Tranche 3 — the 14-day judging window (2026-08-18 through 2026-08-31):
