@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CASTING — Show your customers someone who looks like them",
   description: "Casts one product across an eight-person, Fitzpatrick-measured reference panel and scores catalogue skin-tone coverage.",
+  icons: {
+    icon: "/brand/casting-favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
