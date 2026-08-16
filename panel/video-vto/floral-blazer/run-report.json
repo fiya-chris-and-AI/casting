@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-08-15T21:21:53.883Z",
+  "slug": "floral-blazer",
+  "garment": "product-floral-blazer.jpg",
+  "category": "outer",
+  "totalWallClockMs": 24492,
+  "unitsBefore": 540,
+  "unitsAfter": 526,
+  "unitsSpent": 14,
+  "perPerson": [
+    {
+      "id": "person-02",
+      "status": "success",
+      "ms": 13701,
+      "attempt": 1
+    },
+    {
+      "id": "person-03",
+      "status": "success",
+      "ms": 15945,
+      "attempt": 1
+    },
+    {
+      "id": "person-04",
+      "status": "success",
+      "ms": 24348,
+      "attempt": 1
+    },
+    {
+      "id": "person-05",
+      "status": "success",
+      "ms": 22540,
+      "attempt": 1
+    },
+    {
+      "id": "person-06",
+      "status": "success",
+      "ms": 22155,
+      "attempt": 1
+    },
+    {
+      "id": "person-07",
+      "status": "success",
+      "ms": 18224,
+      "attempt": 1
+    },
+    {
+      "id": "person-08",
+      "status": "success",
+      "ms": 24477,
+      "attempt": 1
+    }
+  ]
+}

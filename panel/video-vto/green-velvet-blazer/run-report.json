@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-08-15T20:56:44.277Z",
+  "slug": "green-velvet-blazer",
+  "garment": "product-green-velvet-blazer.jpg",
+  "category": "outer",
+  "totalWallClockMs": 24652,
+  "unitsBefore": 590,
+  "unitsAfter": 574,
+  "unitsSpent": 16,
+  "perPerson": [
+    {
+      "id": "person-01",
+      "status": "success",
+      "ms": 13867,
+      "attempt": 1
+    },
+    {
+      "id": "person-02",
+      "status": "success",
+      "ms": 13648,
+      "attempt": 1
+    },
+    {
+      "id": "person-03",
+      "status": "success",
+      "ms": 24647,
+      "attempt": 1
+    },
+    {
+      "id": "person-04",
+      "status": "success",
+      "ms": 18345,
+      "attempt": 1
+    },
+    {
+      "id": "person-05",
+      "status": "success",
+      "ms": 22518,
+      "attempt": 1
+    },
+    {
+      "id": "person-06",
+      "status": "success",
+      "ms": 13720,
+      "attempt": 1
+    },
+    {
+      "id": "person-07",
+      "status": "success",
+      "ms": 22492,
+      "attempt": 1
+    },
+    {
+      "id": "person-08",
+      "status": "success",
+      "ms": 22785,
+      "attempt": 1
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-08-15T20:55:58.041Z",
+  "slug": "houndstooth-blazer",
+  "garment": "product-houndstooth-blazer.jpg",
+  "category": "outer",
+  "totalWallClockMs": 24795,
+  "unitsBefore": 606,
+  "unitsAfter": 590,
+  "unitsSpent": 16,
+  "perPerson": [
+    {
+      "id": "person-01",
+      "status": "success",
+      "ms": 11934,
+      "attempt": 1
+    },
+    {
+      "id": "person-02",
+      "status": "success",
+      "ms": 13842,
+      "attempt": 1
+    },
+    {
+      "id": "person-03",
+      "status": "success",
+      "ms": 14144,
+      "attempt": 1
+    },
+    {
+      "id": "person-04",
+      "status": "success",
+      "ms": 24789,
+      "attempt": 1
+    },
+    {
+      "id": "person-05",
+      "status": "success",
+      "ms": 24600,
+      "attempt": 1
+    },
+    {
+      "id": "person-06",
+      "status": "success",
+      "ms": 22477,
+      "attempt": 1
+    },
+    {
+      "id": "person-07",
+      "status": "success",
+      "ms": 14084,
+      "attempt": 1
+    },
+    {
+      "id": "person-08",
+      "status": "success",
+      "ms": 24543,
+      "attempt": 1
+    }
+  ]
+}

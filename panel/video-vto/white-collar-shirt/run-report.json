@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-08-15T20:57:44.399Z",
+  "slug": "white-collar-shirt",
+  "garment": "product-white-collar-shirt.jpg",
+  "category": "upper_body",
+  "totalWallClockMs": 32744,
+  "unitsBefore": 558,
+  "unitsAfter": 542,
+  "unitsSpent": 16,
+  "perPerson": [
+    {
+      "id": "person-01",
+      "status": "success",
+      "ms": 19979,
+      "attempt": 1
+    },
+    {
+      "id": "person-02",
+      "status": "success",
+      "ms": 15878,
+      "attempt": 1
+    },
+    {
+      "id": "person-03",
+      "status": "success",
+      "ms": 26623,
+      "attempt": 1
+    },
+    {
+      "id": "person-04",
+      "status": "success",
+      "ms": 28681,
+      "attempt": 1
+    },
+    {
+      "id": "person-05",
+      "status": "success",
+      "ms": 32738,
+      "attempt": 1
+    },
+    {
+      "id": "person-06",
+      "status": "success",
+      "ms": 20227,
+      "attempt": 1
+    },
+    {
+      "id": "person-07",
+      "status": "success",
+      "ms": 22284,
+      "attempt": 1
+    },
+    {
+      "id": "person-08",
+      "status": "success",
+      "ms": 26361,
+      "attempt": 1
+    }
+  ]
+}

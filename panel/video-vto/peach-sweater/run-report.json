@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-08-15T21:22:28.077Z",
+  "slug": "peach-sweater",
+  "garment": "product-peach-sweater.jpg",
+  "category": "upper_body",
+  "totalWallClockMs": 32859,
+  "unitsBefore": 526,
+  "unitsAfter": 510,
+  "unitsSpent": 16,
+  "perPerson": [
+    {
+      "id": "person-01",
+      "status": "success",
+      "ms": 22280,
+      "attempt": 1
+    },
+    {
+      "id": "person-02",
+      "status": "success",
+      "ms": 21966,
+      "attempt": 1
+    },
+    {
+      "id": "person-03",
+      "status": "success",
+      "ms": 32544,
+      "attempt": 1
+    },
+    {
+      "id": "person-04",
+      "status": "success",
+      "ms": 28686,
+      "attempt": 1
+    },
+    {
+      "id": "person-05",
+      "status": "success",
+      "ms": 28501,
+      "attempt": 1
+    },
+    {
+      "id": "person-06",
+      "status": "success",
+      "ms": 30366,
+      "attempt": 1
+    },
+    {
+      "id": "person-07",
+      "status": "success",
+      "ms": 30381,
+      "attempt": 1
+    },
+    {
+      "id": "person-08",
+      "status": "success",
+      "ms": 32846,
+      "attempt": 1
+    }
+  ]
+}

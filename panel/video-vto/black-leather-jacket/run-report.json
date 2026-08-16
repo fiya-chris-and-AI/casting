@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-08-15T20:57:10.296Z",
+  "slug": "black-leather-jacket",
+  "garment": "product-black-leather-jacket.jpg",
+  "category": "outer",
+  "totalWallClockMs": 24621,
+  "unitsBefore": 574,
+  "unitsAfter": 558,
+  "unitsSpent": 16,
+  "perPerson": [
+    {
+      "id": "person-01",
+      "status": "success",
+      "ms": 11616,
+      "attempt": 1
+    },
+    {
+      "id": "person-02",
+      "status": "success",
+      "ms": 13852,
+      "attempt": 1
+    },
+    {
+      "id": "person-03",
+      "status": "success",
+      "ms": 17853,
+      "attempt": 1
+    },
+    {
+      "id": "person-04",
+      "status": "success",
+      "ms": 18126,
+      "attempt": 1
+    },
+    {
+      "id": "person-05",
+      "status": "success",
+      "ms": 13915,
+      "attempt": 1
+    },
+    {
+      "id": "person-06",
+      "status": "success",
+      "ms": 24513,
+      "attempt": 1
+    },
+    {
+      "id": "person-07",
+      "status": "success",
+      "ms": 22507,
+      "attempt": 1
+    },
+    {
+      "id": "person-08",
+      "status": "success",
+      "ms": 24605,
+      "attempt": 1
+    }
+  ]
+}
