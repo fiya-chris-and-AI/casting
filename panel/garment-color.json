@@ -1,10 +1,10 @@
 {
-  "extractedAt": "2026-08-12T20:31:49.113Z",
-  "method": "center-crop average, 35% of min(width,height), from panel/product-images/demo-product-tshirt.png",
+  "extractedAt": "2026-08-17T00:08:07.027Z",
+  "method": "center-crop average, 35% of min(width,height), from panel/product-images/demo-product-navy-shirt.png",
   "rgb": {
-    "r": 85,
-    "g": 53,
-    "b": 44
+    "r": 58,
+    "g": 66,
+    "b": 94
   },
-  "hex": "#55352c"
+  "hex": "#3a425e"
 }

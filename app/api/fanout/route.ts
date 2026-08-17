@@ -93,7 +93,7 @@ export async function POST(request: Request) {
           productBytes = Buffer.from(body.productImageBase64, "base64");
           productContentType = body.contentType ?? "image/png";
         } else {
-          productBytes = await fetchAsBuffer(new URL("/panel/product-images/demo-product-tshirt.png", request.url));
+          productBytes = await fetchAsBuffer(new URL("/panel/product-images/demo-product-navy-shirt.png", request.url));
         }
 
         const panelMembers = await Promise.all(

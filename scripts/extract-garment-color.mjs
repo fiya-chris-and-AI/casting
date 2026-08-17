@@ -4,7 +4,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const productPath = path.join(__dirname, "..", "panel", "product-images", "demo-product-tshirt.png");
+const productPath = path.join(__dirname, "..", "panel", "product-images", "demo-product-navy-shirt.png");
 
 // The flat-lay product photo has the garment filling the center of the frame
 // against a light-gray background. Sample a center crop (well inside the
@@ -36,7 +36,7 @@ const hex = `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`
 
 const out = {
   extractedAt: new Date().toISOString(),
-  method: "center-crop average, 35% of min(width,height), from panel/product-images/demo-product-tshirt.png",
+  method: "center-crop average, 35% of min(width,height), from panel/product-images/demo-product-navy-shirt.png",
   rgb: { r, g, b },
   hex,
 };

@@ -64,7 +64,7 @@ const PANEL_IDS = [
 
 const BODY_DIR = path.join(__dirname, "..", "panel", "body-images");
 const RESULT_DIR = path.join(__dirname, "..", "panel", "vto-results");
-const PRODUCT_PATH = path.join(__dirname, "..", "panel", "product-images", "demo-product-tshirt.png");
+const PRODUCT_PATH = path.join(__dirname, "..", "panel", "product-images", "demo-product-navy-shirt.png");
 fs.mkdirSync(RESULT_DIR, { recursive: true });
 
 async function runOne(id, garmentFileId) {
@@ -99,7 +99,7 @@ async function runOne(id, garmentFileId) {
 async function main() {
   console.log("uploading garment...");
   const productBytes = fs.readFileSync(PRODUCT_PATH);
-  const garmentFileId = await uploadFile(productBytes, "demo-product-tshirt.png", "image/png");
+  const garmentFileId = await uploadFile(productBytes, "demo-product-navy-shirt.png", "image/png");
   console.log("garment file_id:", garmentFileId);
 
   const fanoutStart = Date.now();
