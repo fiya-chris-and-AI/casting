@@ -72,23 +72,10 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
   const [pendingLiveAction, setPendingLiveAction] = useState<"upload" | "demo" | null>(null);
   const [liveAccessPopoverOpen, setLiveAccessPopoverOpen] = useState(false);
   const [activeAuthMode, setActiveAuthMode] = useState<"code" | "key" | null>(() => getStoredAuth()?.kind ?? null);
-  const [accessCodeInput, setAccessCodeInput] = useState("");
   const [accessError, setAccessError] = useState<string | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
   const [budgetCappedHint, setBudgetCappedHint] = useState(false);
-  // Below ~1100px the right link group would wrap; shorten the "Live runs"
-  // label instead of letting it break onto a second line.
-  const [isNarrowLinkGroup, setIsNarrowLinkGroup] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 1099px)");
-    const update = () => setIsNarrowLinkGroup(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-
   // Fetch all 8 seed images from the first byte of the page, in parallel with
   // the staggered reveal — not when each tile happens to mount.
   for (const member of panel) {
@@ -140,17 +127,6 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
     setLiveAccessPopoverOpen(false);
     if (action === "upload") fileInputRef.current?.click();
     else if (action === "demo") startRun(null, auth);
-  }
-
-  function confirmAccessCode() {
-    const code = accessCodeInput.trim();
-    if (!code) return;
-    sessionStorage.setItem(ACCESS_CODE_STORAGE_KEY, code);
-    sessionStorage.removeItem(API_KEY_STORAGE_KEY);
-    setActiveAuthMode("code");
-    setAccessCodeInput("");
-    setAccessError(null);
-    runOrClosePopover({ kind: "code", value: code });
   }
 
   function confirmApiKey() {
@@ -267,14 +243,9 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
   const diagnosisByPanelId = isLive ? liveDiagnosisByPanelId : seedDiagnosisByPanelId;
   const selected = selectedId ? diagnosisByPanelId[selectedId] : null;
 
-  const liveAccessLabel =
-    activeAuthMode === "key"
-      ? t("toolbar.liveAccessLabelOwnKey")
-      : activeAuthMode === "code"
-        ? t("toolbar.liveAccessLabelAccessCode")
-        : isNarrowLinkGroup
-          ? t("toolbar.liveAccessLabelNarrow")
-          : t("toolbar.liveAccessLabelDefault");
+  // BYOK only (decision 17.08.): the jury is the API team and has its own key.
+  // The access-code path still exists server-side but is no longer offered in the UI.
+  const liveAccessLabel = activeAuthMode === "key" ? t("toolbar.liveAccessLabelOwnKey") : t("popover.useOwnKey");
 
   return (
     <div className="relative flex h-full w-full flex-col">
@@ -369,35 +340,6 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
           </div>
 
           <form
-            className="mb-3 flex flex-col gap-1"
-            onSubmit={(e) => {
-              e.preventDefault();
-              confirmAccessCode();
-            }}
-          >
-            <span className="font-medium text-[var(--foreground)]">{t("popover.useCastingBudget")}</span>
-            <div className="flex items-center gap-2">
-              <input
-                autoFocus
-                type="password"
-                value={accessCodeInput}
-                onChange={(e) => setAccessCodeInput(e.target.value)}
-                placeholder={t("popover.accessCodePlaceholder")}
-                className="min-w-0 flex-1 rounded border border-[var(--muted)] bg-transparent px-2 py-1 text-[var(--foreground)] outline-none"
-              />
-              <button
-                type="submit"
-                disabled={!accessCodeInput.trim()}
-                className="rounded border border-[var(--muted)] px-2 py-1 text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-50"
-              >
-                {t("popover.confirm")}
-              </button>
-            </div>
-            <span className="text-[var(--muted)]">{t("popover.jurorsNote")}</span>
-            {accessError && <span className="text-[var(--muted)]">{accessError}</span>}
-          </form>
-
-          <form
             className="flex flex-col gap-1"
             onSubmit={(e) => {
               e.preventDefault();
@@ -407,6 +349,7 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
             <span className="font-medium text-[var(--foreground)]">{t("popover.useOwnKey")}</span>
             <div className="flex items-center gap-2">
               <input
+                autoFocus
                 type="password"
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
