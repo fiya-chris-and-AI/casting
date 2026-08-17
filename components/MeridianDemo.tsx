@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState, type MutableRefObject, type P
 // Try-on images are real Apparel VTO outputs (public/meridian/); never swap in generated ones.
 
 const PRODUCTS = [
+  { name: "Navy Poplin Shirt", price: "$119", color: "Navy", key: "navy" },
   { name: "White Collar Shirt", price: "$89", color: "White", key: "person" },
   { name: "Houndstooth Blazer", price: "$249", color: "Black/White", key: "blazer" },
   { name: "Green Velvet Blazer", price: "$279", color: "Forest", key: "velvet" },
