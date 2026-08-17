@@ -8,7 +8,9 @@ import { getSeedRevealDelayMs, vtoResultPath } from "@/lib/panel";
 import { computeCoverage, type CoverageReport, type MemberDiagnosis } from "@/lib/coverage";
 import { extractDominantColorFromFile, fileToBase64 } from "@/lib/client-color";
 import type { PanelFanoutResult } from "@/lib/youcam/fanout";
+import { useT } from "@/lib/i18n/LocaleProvider";
 import { CoverageSummary } from "./CoverageSummary";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 interface CastingAppProps {
   panel: PanelMember[];
@@ -44,6 +46,7 @@ function getStoredAuth(): LiveAuth | null {
 }
 
 export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: CastingAppProps) {
+  const t = useT();
   const [mode, setMode] = useState<Mode>("seed");
   const [liveResults, setLiveResults] = useState<LiveResultsById>({});
   const [liveDiagnosisByPanelId, setLiveDiagnosisByPanelId] = useState<Record<string, MemberDiagnosis>>({});
@@ -200,10 +203,10 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
       if (res.status === 401) {
         if (auth.kind === "code") {
           sessionStorage.removeItem(ACCESS_CODE_STORAGE_KEY);
-          setAccessError("That access code didn't work. Jurors: check the Devpost testing instructions.");
+          setAccessError(t("fallback.accessCodeFailed"));
         } else {
           sessionStorage.removeItem(API_KEY_STORAGE_KEY);
-          setApiKeyError("Perfect Corp rejected this key.");
+          setApiKeyError(t("fallback.apiKeyRejected"));
         }
         setActiveAuthMode(null);
         setMode("seed");
@@ -213,7 +216,7 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
       }
 
       if (!res.ok || !res.body) {
-        fallBackToSeed("Live run couldn't start. Showing a precomputed run instead.");
+        fallBackToSeed(t("fallback.couldNotStart"));
         return;
       }
 
@@ -243,13 +246,13 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
             fallBackToSeed(message.message, { budgetCapped: auth.kind !== "key" });
             return;
           } else if (message.type === "fatal") {
-            fallBackToSeed("Live run hit an error. Showing a precomputed run instead.");
+            fallBackToSeed(t("fallback.hitError"));
             return;
           }
         }
       }
     } catch {
-      fallBackToSeed("Network error during the live run. Showing a precomputed run instead.");
+      fallBackToSeed(t("fallback.networkError"));
     }
   }
 
@@ -266,12 +269,12 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
 
   const liveAccessLabel =
     activeAuthMode === "key"
-      ? "Live runs · own key"
+      ? t("toolbar.liveAccessLabelOwnKey")
       : activeAuthMode === "code"
-        ? "Live runs · access code"
+        ? t("toolbar.liveAccessLabelAccessCode")
         : isNarrowLinkGroup
-          ? "Live runs — code or own key"
-          : "Live runs — access code or your own YouCam key";
+          ? t("toolbar.liveAccessLabelNarrow")
+          : t("toolbar.liveAccessLabelDefault");
 
   return (
     <div className="relative flex h-full w-full flex-col">
@@ -297,14 +300,14 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
                 : { border: "1px solid var(--muted)", color: "var(--muted)" }
             }
           >
-            {isLive ? "● live run — real API calls" : "precomputed demo run"}
+            {isLive ? t("toolbar.badgeLive") : t("toolbar.badgePrecomputed")}
           </span>
           <button
             onClick={() => requestLiveRun("upload")}
             disabled={mode === "running"}
             className="rounded border border-[var(--muted)] px-2 py-1 text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-50"
           >
-            Upload your own product — runs live
+            {t("toolbar.uploadButton")}
           </button>
           <input
             ref={fileInputRef}
@@ -322,7 +325,7 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
             disabled={mode === "running"}
             className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)] disabled:opacity-50"
           >
-            {mode === "running" ? "Running…" : "Run it live with the demo product"}
+            {mode === "running" ? t("toolbar.runningButton") : t("toolbar.runLiveButton")}
           </button>
         </div>
 
@@ -338,19 +341,20 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
                     onClick={() => openLiveAccessPopover("demo")}
                     className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)]"
                   >
-                    …or run it on your own YouCam API key
+                    {t("fallback.orOwnKey")}
                   </button>
                 </>
               )}
             </span>
           )}
+          <LanguageSwitcher />
           {/* solid gold = the accent cell in the CASTING mark; deliberately loud so jurors click it */}
           <Link
             href="/client-demo"
             className="flex-none rounded border border-transparent px-2 py-1 font-semibold hover:brightness-95"
             style={{ backgroundColor: "#E0B93F", color: "#1c1b1a" }}
           >
-            Client demo
+            {t("toolbar.clientDemoLink")}
           </Link>
         </div>
       </div>
@@ -358,9 +362,9 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
       {liveAccessPopoverOpen && (
         <div className="absolute right-4 top-10 z-20 w-80 rounded-md border border-[var(--muted)] bg-[var(--surface)] p-3 text-xs shadow-lg">
           <div className="mb-2 flex items-center justify-between">
-            <span className="font-medium text-[var(--foreground)]">Live runs</span>
+            <span className="font-medium text-[var(--foreground)]">{t("popover.title")}</span>
             <button type="button" onClick={closeLiveAccessPopover} className="text-[var(--muted)] hover:text-[var(--foreground)]">
-              close
+              {t("popover.close")}
             </button>
           </div>
 
@@ -371,14 +375,14 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
               confirmAccessCode();
             }}
           >
-            <span className="font-medium text-[var(--foreground)]">Use CASTING&apos;s budget</span>
+            <span className="font-medium text-[var(--foreground)]">{t("popover.useCastingBudget")}</span>
             <div className="flex items-center gap-2">
               <input
                 autoFocus
                 type="password"
                 value={accessCodeInput}
                 onChange={(e) => setAccessCodeInput(e.target.value)}
-                placeholder="access code"
+                placeholder={t("popover.accessCodePlaceholder")}
                 className="min-w-0 flex-1 rounded border border-[var(--muted)] bg-transparent px-2 py-1 text-[var(--foreground)] outline-none"
               />
               <button
@@ -386,12 +390,10 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
                 disabled={!accessCodeInput.trim()}
                 className="rounded border border-[var(--muted)] px-2 py-1 text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-50"
               >
-                Confirm
+                {t("popover.confirm")}
               </button>
             </div>
-            <span className="text-[var(--muted)]">
-              Jurors: the code is in the Devpost testing instructions. Live runs spend real API units; the app caps them per day.
-            </span>
+            <span className="text-[var(--muted)]">{t("popover.jurorsNote")}</span>
             {accessError && <span className="text-[var(--muted)]">{accessError}</span>}
           </form>
 
@@ -402,13 +404,13 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
               confirmApiKey();
             }}
           >
-            <span className="font-medium text-[var(--foreground)]">Use your own YouCam API key</span>
+            <span className="font-medium text-[var(--foreground)]">{t("popover.useOwnKey")}</span>
             <div className="flex items-center gap-2">
               <input
                 type="password"
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="API key"
+                placeholder={t("popover.apiKeyPlaceholder")}
                 className="min-w-0 flex-1 rounded border border-[var(--muted)] bg-transparent px-2 py-1 text-[var(--foreground)] outline-none"
               />
               <button
@@ -416,13 +418,10 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
                 disabled={!apiKeyInput.trim()}
                 className="rounded border border-[var(--muted)] px-2 py-1 text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-50"
               >
-                Confirm
+                {t("popover.confirm")}
               </button>
             </div>
-            <span className="text-[var(--muted)]">
-              Sent with each run straight to Perfect Corp through our server. Never stored, never logged; kept only in this
-              browser tab.
-            </span>
+            <span className="text-[var(--muted)]">{t("popover.ownKeyNote")}</span>
             {apiKeyError && <span className="text-[var(--muted)]">{apiKeyError}</span>}
           </form>
         </div>
@@ -445,7 +444,7 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
           let statusLabel: string | null = null;
           if (isLive) {
             imageSrc = live?.status === "success" ? live.resultImageUrl : null;
-            if (!live) statusLabel = "pending…";
+            if (!live) statusLabel = t("tile.pending");
             if (live?.status === "error") statusLabel = live.error;
           } else {
             imageSrc = vtoResultPath(member.id);
@@ -475,7 +474,7 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
                     if (el && el.complete && el.naturalWidth > 0) markLoaded(imageSrc);
                   }}
                   onLoad={() => markLoaded(imageSrc)}
-                  alt={`Product on a reference person, Fitzpatrick ${member.fitzpatrickScale ?? "unmeasured"}`}
+                  alt={t("tile.altText", { band: member.fitzpatrickScale ?? "unmeasured" })}
                   className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-700 ease-out ${imgVisible ? "opacity-100" : "opacity-0"}`}
                 />
               )}
@@ -486,7 +485,7 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
               >
                 <span className="font-medium tracking-wide">
                   Fitzpatrick {member.fitzpatrickScale ?? "—"}
-                  {isGap && <span className="ml-1 text-[color:var(--gap-accent)]">● low contrast</span>}
+                  {isGap && <span className="ml-1 text-[color:var(--gap-accent)]">● {t("tile.lowContrast")}</span>}
                 </span>
                 <span className="font-mono opacity-80">{member.skinColorHex}</span>
               </figcaption>
@@ -504,9 +503,16 @@ export function CastingApp({ panel, seedDiagnosisByPanelId, seedCoverage }: Cast
             <span className="font-medium">Fitzpatrick {selected.band}</span>
             <span className="font-mono text-[var(--muted)]">{selected.skinColorHex}</span>
           </div>
-          <p className="text-[var(--muted)]">{selected.plainLanguage}</p>
+          <p className="text-[var(--muted)]">
+            {t(selected.lowContrast ? "diagnosis.lowContrast" : "diagnosis.clearSeparation", {
+              band: selected.band,
+              hex: selected.skinColorHex,
+              dl: selected.deltaL.toFixed(1),
+              de: selected.deltaE2000.toFixed(1),
+            })}
+          </p>
           <p className="mt-2 text-xs text-[var(--muted)]">
-            ΔL* {selected.deltaL.toFixed(1)} (primary) · ΔE2000 {selected.deltaE2000.toFixed(1)} (secondary)
+            {t("diagnosis.deltaLine", { dl: selected.deltaL.toFixed(1), de: selected.deltaE2000.toFixed(1) })}
           </p>
         </div>
       )}
